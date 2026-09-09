@@ -2,26 +2,26 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { ClipLoader } from "react-spinners";
+import { getAbout } from "@/lib/api";
+import { About } from "@/lib/api/types";
 
 export default function AboutPage() {
-  const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
   const [loading, setLoading] = useState<boolean>(true);
-  const [about, setAbout] = useState<any>(null);
-
-  const fetchAbout = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get(`${BASE_URL}abouts`);
-      setAbout(res.data);
-      setLoading(false);
-    } catch (err) {
-      console.error("Error fetching shipping returns", err);
-    }
-  };
+  const [about, setAbout] = useState<About | null>(null);
 
   useEffect(() => {
+    const fetchAbout = async () => {
+      setLoading(true);
+      try {
+        setAbout(await getAbout());
+      } catch (error) {
+        console.error("Error fetching about:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchAbout();
   }, []);
 
@@ -29,6 +29,14 @@ export default function AboutPage() {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-500">
         <ClipLoader />
+      </div>
+    );
+  }
+
+  if (!about) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-500">
+        Content not available.
       </div>
     );
   }
@@ -41,14 +49,14 @@ export default function AboutPage() {
         <div className="flex justify-center items-center">
           <div
             className="text-justify mt-4 text-sm [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6"
-            dangerouslySetInnerHTML={{ __html: about.description }}
+            dangerouslySetInnerHTML={{ __html: about.content }}
           />
         </div>
 
         <div className="flex justify-center">
           <div className="w-full max-w-[350px]">
             <Image
-              src={`${process.env.NEXT_PUBLIC_IMAGE_URL}${about?.thumbnail}`}
+              src={about.image_url}
               loading="lazy"
               alt="Celcius Fashion"
               width={500}

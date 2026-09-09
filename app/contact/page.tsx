@@ -1,35 +1,54 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { ClipLoader } from "react-spinners";
+import { getPage } from "@/lib/api";
+import { Page } from "@/lib/api/types";
+
 export default function ContactsPage() {
+  const [loading, setLoading] = useState<boolean>(true);
+  const [page, setPage] = useState<Page | null>(null);
+
+  useEffect(() => {
+    const fetchPage = async () => {
+      setLoading(true);
+      try {
+        setPage(await getPage("contact_us"));
+      } catch (error) {
+        console.error("Error fetching contact info:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPage();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-500">
+        <ClipLoader />
+      </div>
+    );
+  }
+
   return (
-    <div className="p-8 md:p-16">
-      <h2 className="text-center">Contact Info</h2>
-      <hr className="text-zinc-300 my-4" />
-      <p className="text-xs">You can contact us for more information.</p>
+    <div className="p-8 md:p-16 max-w-4xl mx-auto">
+      <h2 className="text-center text-2xl font-semibold">
+        {page?.title || "Contact Us"}
+      </h2>
 
-      <h2 className="font-bold my-6">Customer Service Hours:</h2>
-      <div className="flex-1 flex flex-col mb-4">
-        <span className="text-xs">Monday - Friday</span>
-        <span className="text-xs">09:00 - 16:00 WIB</span>
-      </div>
+      <hr className="text-zinc-300 my-6" />
 
-      <div className="flex-1 flex flex-col mb-6">
-        <p className="text-xs">
-          Pemesanan serta permintaan atau pertanyaan yang masuk pada hari Sabtu,
-          Minggu, dan hari libur akan diproses pada hari kerja berikutnya.
-        </p>
-      </div>
-
-      <div className="flex-1 flex flex-col gap-4">
-        <span>
-          <span className="font-bold">Email:</span> celciusmen@gmail.com
-        </span>
-        <span>
-          <span className="font-bold">Whatsapp:</span> 081113310566
-        </span>
-      </div>
-
-      <p className="text-xs my-6">
-        For questions regarding your order, please include your order number.
-      </p>
+      <div
+        className="
+          text-sm text-zinc-700
+          [&_ol]:list-decimal [&_ol]:pl-6
+          [&_ul]:list-disc [&_ul]:pl-6
+          [&_li]:mb-3
+        "
+        dangerouslySetInnerHTML={{ __html: page?.content || "" }}
+      />
     </div>
   );
 }

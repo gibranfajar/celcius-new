@@ -5,149 +5,167 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import formatProductName from "@/lib/formatProductName";
 import { formatToIdr } from "@/lib/formatToIdr";
-import axios from "axios";
-import { ClipLoader } from "react-spinners";
 import { formatMiniText } from "@/lib/formatMiniText";
+import { getProducts, getBanners, getLookbooks } from "@/lib/api";
+import { Banner, Lookbook, Product } from "@/lib/api/types";
+import SkeletonImage from "@/components/SkeletonImage";
+import { getDeviceType } from "@/lib/getDeviceType";
 
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay, Pagination } from "swiper/modules";
+import { Autoplay } from "swiper/modules";
 
 import "swiper/css";
 import "swiper/css/pagination";
 
 export default function Home() {
-  const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-  const [isLoadingProduct, setIsLoadingProduct] = useState(true);
-  const [isLoadingBanner, setIsLoadingBanner] = useState(true);
-  const [loadingBlogData, setLoadingBlogData] = useState(true);
-  const [dataProduct, setDataProduct] = useState<any[]>([]);
-  const [bannerDataTop, setBannerDataTop] = useState<any[]>([]);
-  const [bannerDataBottom, setBannerDataBottom] = useState<any[]>([]);
-  const [blogData, setBlogData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [bannerTop, setBannerTop] = useState<Banner[]>([]);
+  const [bannerBottom, setBannerBottom] = useState<Banner[]>([]);
+  const [gridLookbooks, setGridLookbooks] = useState<Lookbook[]>([]);
 
   useEffect(() => {
-    const fetchDataProduct = async () => {
-      setIsLoadingProduct(true);
+    const load = async () => {
+      setIsLoading(true);
       try {
-        const response = await axios.get(`${BASE_URL}product-list`);
-        setDataProduct(response.data);
+        const [productsRes, banners, lookbooksRes] = await Promise.all([
+          getProducts(),
+          getBanners({ page: "men", display: getDeviceType() }),
+          getLookbooks(),
+        ]);
+
+        setProducts(productsRes.data);
+        setBannerTop(banners.filter((item) => item.position === "top"));
+        setBannerBottom(banners.filter((item) => item.position === "bottom"));
+
+        // Home grid: the 2 most recently published "men" lookbooks plus the
+        // most recently published "women" one - 3 tiles total. `lookbooksRes`
+        // is already ordered latest-first by the API.
+        const latestMen = lookbooksRes.data
+          .filter((l) => l.type === "men")
+          .slice(0, 2);
+        const latestWomen = lookbooksRes.data
+          .filter((l) => l.type === "women")
+          .slice(0, 1);
+        setGridLookbooks([...latestMen, ...latestWomen]);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching home data:", error);
       } finally {
-        setIsLoadingProduct(false);
+        setIsLoading(false);
       }
     };
 
-    const fetchDataBanner = async () => {
-      setIsLoadingBanner(true);
-      try {
-        const response = await axios.get(`${BASE_URL}home-displays?type=men`);
-
-        const filteredDataTop = response.data.filter(
-          (item: any) => item.position === "top",
-        );
-
-        const filteredDataBottom = response.data.filter(
-          (item: any) => item.position === "bottom",
-        );
-
-        setBannerDataTop(filteredDataTop);
-        setBannerDataBottom(filteredDataBottom);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setIsLoadingBanner(false);
-      }
-    };
-
-    const fetchBlogCollection = async () => {
-      try {
-        const response = await axios.get(`${BASE_URL}collection/blog/list`);
-        setBlogData(response.data);
-      } catch (err: any) {
-        console.error("Error fetching collections:", err);
-      } finally {
-        setLoadingBlogData(false);
-      }
-    };
-
-    fetchBlogCollection();
-    fetchDataBanner();
-    fetchDataProduct();
+    load();
   }, []);
 
-  if (isLoadingProduct || isLoadingBanner || loadingBlogData) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-500">
-        <ClipLoader />
+      <div className="animate-pulse">
+        <SkeletonImage className="w-full aspect-4/5 md:aspect-video" />
+
+        <div className="grid md:grid-cols-3 items-start p-6 gap-6">
+          {[0, 1, 2].map((i) => (
+            <div key={i}>
+              <SkeletonImage className="aspect-3/4" />
+              <div className="h-4 w-2/3 bg-gray-200 mt-4 mb-2" />
+              <div className="h-3 w-full bg-gray-100 mb-1" />
+              <div className="h-3 w-4/5 bg-gray-100" />
+            </div>
+          ))}
+        </div>
+
+        <div className="p-4 md:p-6">
+          <div className="h-4 w-24 bg-gray-200 mx-auto mb-6" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+              <div key={i}>
+                <SkeletonImage className="aspect-2/3" />
+                <div className="h-3 w-3/4 bg-gray-200 mt-3 mb-2" />
+                <div className="h-3 w-1/3 bg-gray-100" />
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
+
+  const renderBannerSlider = (banners: Banner[]) => (
+    <Swiper modules={[Autoplay]} autoplay={{ delay: 4000 }} loop>
+      {banners.map((item) => (
+        <SwiperSlide key={item.id}>
+          <div className="relative w-full aspect-4/5 md:aspect-video">
+            <Link href={`/collection/${item.collection?.slug ?? ""}`} className="block w-full h-full">
+              <Image
+                src={item.image_url}
+                fill
+                priority
+                alt={item.title ?? ""}
+                className="object-cover cursor-pointer"
+              />
+            </Link>
+
+            <div className="absolute inset-0 flex flex-col justify-end items-center text-center text-white px-8 pb-12 md:items-end md:text-right md:px-12 md:pb-6 pointer-events-none">
+              <h1 className="text-3xl md:text-4xl">{item.title}</h1>
+
+              <div className="flex gap-2 mt-4 md:flex-row md:gap-2 md:mt-2 pointer-events-auto">
+                {item.collection && (
+                  <Link
+                    href={`/collection/${item.collection.slug}`}
+                    className="relative text-sm"
+                  >
+                    Shop The Collection
+                  </Link>
+                )}
+
+                {item.lookbook && (
+                  <Link
+                    href={`/lookbook/${item.lookbook.slug}`}
+                    className="relative text-sm"
+                  >
+                    View The Lookbook
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </SwiperSlide>
+      ))}
+    </Swiper>
+  );
+
   return (
     <>
       {/* Banner Atas */}
-      <div className="space-y-2">
-        <Swiper modules={[Autoplay]} autoplay={{ delay: 4000 }} loop>
-          {bannerDataTop.map((item: any, index: number) => (
-            <SwiperSlide key={index}>
-              <div className="relative">
-                <Link href={`campaign/${item.campaign?.slug}`}>
-                  <Image
-                    src={`${process.env.NEXT_PUBLIC_IMAGE_URL}${item.banner}`}
-                    loading="lazy"
-                    alt={item.title}
-                    className="block w-full object-cover h-screen md:h-auto cursor-pointer"
-                    width={1920}
-                    height={400}
-                  />
-                </Link>
+      {bannerTop.length > 0 && (
+        <div className="space-y-2">{renderBannerSlider(bannerTop)}</div>
+      )}
 
-                <div className="absolute inset-0 flex flex-col justify-end items-center text-center text-white px-8 pb-12 md:items-end md:text-right md:px-12 md:pb-6 pointer-events-none">
-                  <h1 className="text-3xl md:text-4xl">{item.title}</h1>
-
-                  <div className="flex gap-2 mt-4 md:flex-row md:gap-2 md:mt-2 pointer-events-auto">
-                    <Link
-                      href={`campaign/${item.campaign?.slug}`}
-                      className="relative text-sm"
-                    >
-                      Shop The Collection
-                    </Link>
-
-                    <Link
-                      href={`collection/${item.collection?.slug}`}
-                      className="relative text-sm"
-                    >
-                      View The Lookbook
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
-      </div>
-
-      {/* Grid Collection */}
+      {/* Grid Lookbook */}
       <div className="grid md:grid-cols-3 items-start p-6 gap-6 base-font">
-        {blogData.map((item) => (
+        {gridLookbooks.map((item) => (
           <div key={item.slug}>
-            <Link href={`/collection/${item.slug}`} className="cursor-pointer">
+            <Link
+              href={`/lookbook/${item.slug}`}
+              className="cursor-pointer block relative aspect-3/4"
+            >
               <Image
-                src={`${process.env.NEXT_PUBLIC_IMAGE_URL}${item.thumbnail}`}
-                alt={item.title || "Thumbnail"}
-                width={500}
-                height={500}
-                className="w-full h-auto"
+                src={item.thumbnail_url}
+                alt={item.title ?? ""}
+                fill
+                className="object-cover"
               />
             </Link>
             <p className="text-lg mt-4 mb-2">{item.title}</p>
+            {item.description && (
+              <p
+                className="text-xs text-gray-600 mb-2"
+                dangerouslySetInnerHTML={formatMiniText(item.description, 100)}
+              />
+            )}
             <hr className="text-black mb-4 w-1/6" />
-            <p
-              className="text-xs"
-              dangerouslySetInnerHTML={formatMiniText(item.description, 100)}
-            ></p>
             <Link
-              href={`/collection/${item.slug}`}
+              href={`/lookbook/${item.slug}`}
               aria-label={`View lookbook ${item.title}`}
               className="relative inline-block mt-6 text-verysmall"
             >
@@ -158,46 +176,9 @@ export default function Home() {
       </div>
 
       {/* Banner Bawah */}
-      <div className="space-y-2">
-        <Swiper modules={[Autoplay]} autoplay={{ delay: 4000 }} loop>
-          {bannerDataBottom.map((item: any, index: number) => (
-            <SwiperSlide key={index}>
-              <div className="relative">
-                <Link href={`campaign/${item.campaign?.slug}`}>
-                  <Image
-                    src={`${process.env.NEXT_PUBLIC_IMAGE_URL}${item.banner}`}
-                    loading="lazy"
-                    alt={item.title}
-                    className="block w-full object-cover h-screen md:h-auto cursor-pointer"
-                    width={1920}
-                    height={400}
-                  />
-                </Link>
-
-                <div className="absolute inset-0 flex flex-col justify-end items-center text-center text-white px-8 pb-12 md:items-end md:text-right md:px-12 md:pb-6 pointer-events-none">
-                  <h1 className="text-3xl md:text-4xl">{item.title}</h1>
-
-                  <div className="flex gap-2 mt-4 md:flex-row md:gap-2 md:mt-2 pointer-events-auto">
-                    <Link
-                      href={`campaign/${item.campaign?.slug}`}
-                      className="relative text-sm"
-                    >
-                      Shop The Collection
-                    </Link>
-
-                    <Link
-                      href={`collection/${item.collection?.slug}`}
-                      className="relative text-sm"
-                    >
-                      View The Lookbook
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
-      </div>
+      {bannerBottom.length > 0 && (
+        <div className="space-y-2">{renderBannerSlider(bannerBottom)}</div>
+      )}
 
       {/* product grid */}
       <div className="p-4 md:p-6">
@@ -206,35 +187,35 @@ export default function Home() {
         </h1>
         <div className="flex justify-center items-center">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {dataProduct && dataProduct.length > 0 ? (
-              dataProduct
-                .filter((item: any) => item.type === "men")
+            {products.filter((item) => item.type === "men").length > 0 ? (
+              products
+                .filter((item) => item.type === "men")
                 .slice(0, 8)
-                .map((item: any, index: number) => {
-                  const hasDiscount = item.discount > 0;
-                  const finalPrice = hasDiscount
-                    ? item.price - (item.price * item.discount) / 100
-                    : item.price;
+                .map((item) => {
+                  const hasDiscount = item.final_price < item.price;
+                  const variantImages = item.variants?.[0]?.images ?? [];
+                  const hoverImage =
+                    variantImages[1]?.url ?? item.thumbnail_url;
 
                   return (
                     <Link
-                      key={index}
+                      key={item.id}
                       href={`/products/${item.type}/${item.slug}`}
                       className="group cursor-pointer"
                     >
                       <div className="relative overflow-hidden">
                         <Image
-                          src={item.image1}
+                          src={item.thumbnail_url}
                           loading="lazy"
-                          alt={item.name}
+                          alt={item.name ?? ""}
                           className="w-full h-auto object-cover transition-opacity duration-300 group-hover:opacity-0"
                           width={400}
                           height={600}
                         />
                         <Image
-                          src={item.image2}
+                          src={hoverImage}
                           loading="lazy"
-                          alt={item.name}
+                          alt={item.name ?? ""}
                           className="w-full h-auto object-cover absolute top-0 left-0 transition-opacity duration-300 opacity-0 group-hover:opacity-100"
                           width={400}
                           height={600}
@@ -242,7 +223,9 @@ export default function Home() {
 
                         {hasDiscount && (
                           <span className="absolute top-2 left-2 bg-red-600 text-white text-xs font-semibold px-2 py-1">
-                            -{item.discount}%
+                            {item.discount_type === "percent"
+                              ? `-${item.discount_value}%`
+                              : "SALE"}
                           </span>
                         )}
                       </div>
@@ -258,7 +241,7 @@ export default function Home() {
                               hasDiscount ? "text-black" : "text-gray-900"
                             }`}
                           >
-                            {formatToIdr(finalPrice)}
+                            {formatToIdr(item.final_price)}
                           </span>
 
                           {hasDiscount && (

@@ -1,27 +1,27 @@
 "use client";
 
-import axios from "axios";
 import { useEffect, useState } from "react";
 import { ClipLoader } from "react-spinners";
+import { getPage } from "@/lib/api";
+import { Page } from "@/lib/api/types";
 
 export default function PrivacyPolicyPage() {
-  const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
   const [loading, setLoading] = useState<boolean>(true);
-  const [privacyPolicy, setPrivacyPolicy] = useState<any>([]);
-
-  const fetchPrivacyPolicy = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get(`${BASE_URL}privacy-policy`);
-      setPrivacyPolicy(res.data);
-      setLoading(false);
-    } catch (err) {
-      console.error("Error fetching shipping returns", err);
-    }
-  };
+  const [page, setPage] = useState<Page | null>(null);
 
   useEffect(() => {
-    fetchPrivacyPolicy();
+    const fetchPage = async () => {
+      setLoading(true);
+      try {
+        setPage(await getPage("privacy_policy"));
+      } catch (error) {
+        console.error("Error fetching privacy policy:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPage();
   }, []);
 
   if (loading) {
@@ -34,7 +34,9 @@ export default function PrivacyPolicyPage() {
 
   return (
     <div className="p-8 md:p-16 max-w-4xl mx-auto">
-      <h2 className="text-center text-2xl font-semibold">Privacy Policy</h2>
+      <h2 className="text-center text-2xl font-semibold">
+        {page?.title || "Privacy Policy"}
+      </h2>
 
       <hr className="text-zinc-300 my-6" />
 
@@ -43,9 +45,9 @@ export default function PrivacyPolicyPage() {
           text-sm text-zinc-700
           [&_ol]:list-decimal [&_ol]:pl-6
           [&_ul]:list-disc [&_ul]:pl-6
-          [&_li]:
+          [&_li]:mb-3
         "
-        dangerouslySetInnerHTML={{ __html: privacyPolicy.content }}
+        dangerouslySetInnerHTML={{ __html: page?.content || "" }}
       />
     </div>
   );

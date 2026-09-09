@@ -23,6 +23,71 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Consistent, snappy motion for interactive elements site-wide. */
+a,
+button,
+input,
+select,
+textarea {
+  transition:
+    background-color 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease,
+    opacity 200ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+button:not(:disabled),
+a {
+  cursor: pointer;
+}
+
+/* A visible, on-brand focus state instead of the browser default outline. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid #171717;
+  outline-offset: 2px;
+}
+
+input,
+select,
+textarea {
+  outline: none;
+}
+
+::selection {
+  background: #171717;
+  color: #ffffff;
+}
+
+/* Thin, unobtrusive scrollbar - Chromium + Firefox. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d4d4d4 transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #d4d4d4;
+  border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: #a3a3a3;
 }
 
 .base-font {
@@ -53,21 +118,62 @@ body {
   animation: fade-in 0.2s ease-in-out;
 }
 
+/* Underline that grows in from the left on hover/focus, instead of the
+   instant browser default - used across nav and text links. */
+.nav-link {
+  position: relative;
+  text-decoration: none;
+}
+
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 250ms ease;
+}
+
+.nav-link:hover::after,
+.nav-link:focus-visible::after {
+  transform: scaleX(1);
+}
+
 .product-swiper .swiper-button-next,
 .product-swiper .swiper-button-prev {
-  width: 20px;
-  height: 20px;
-  color: #0a0a0a;
+  width: 32px;
+  height: 32px;
+  color: #171717;
+  /* background: rgba(255, 255, 255, 0.85); */
+  /* border-radius: 9999px; */
+  /* box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12); */
+}
+
+.product-swiper .swiper-button-next::after,
+.product-swiper .swiper-button-prev::after {
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .product-swiper .swiper-button-prev {
-  left: 24px;
-  /* geser dari kiri */
+  left: 12px;
 }
 
 .product-swiper .swiper-button-next {
-  right: 24px;
-  /* geser dari kanan */
+  right: 12px;
+}
+
+.product-swiper .swiper-pagination-bullet {
+  background: #171717;
+  opacity: 0.4;
+}
+
+.product-swiper .swiper-pagination-bullet-active {
+  opacity: 1;
 }
 
 @keyframes shimmer {

@@ -24,7 +24,27 @@ export default function RootLayout({
           <Navbar />
           <main className="relative min-h-screen">{children}</main>
           <Footer />
-          <Toaster position="top-right" />
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 3500,
+              className: "seccond-font",
+              style: {
+                background: "#171717",
+                color: "#fafafa",
+                borderRadius: 0,
+                fontSize: "13px",
+                padding: "12px 16px",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.16)",
+              },
+              success: {
+                iconTheme: { primary: "#fafafa", secondary: "#171717" },
+              },
+              error: {
+                iconTheme: { primary: "#fafafa", secondary: "#171717" },
+              },
+            }}
+          />
         </Providers>
         <Script
           src={process.env.NEXT_PUBLIC_MIDTRANS_SNAP_URL}

@@ -1,565 +1,463 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import ModalShippingAddress from "@/components/ModalShippingAddress";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import ModalShippingAddress, {
+  ShippingAddressForm,
+} from "@/components/ModalShippingAddress";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import { formatToIdr } from "@/lib/formatToIdr";
 import formatProductName from "@/lib/formatProductName";
-import axios from "axios";
 import toast from "react-hot-toast";
-import { ClipLoader } from "react-spinners";
+import { Loader2, ShoppingBag } from "lucide-react";
 import { clearCart } from "@/redux/cartSlice";
 import { useRouter } from "next/navigation";
+import { listAddresses, getShippingCost, submitCheckout } from "@/lib/api";
+import { getErrorMessage } from "@/lib/api/client";
+import { ShippingRate, UserAddress } from "@/lib/api/types";
 
-type ShippingService = {
-  name: string;
-  service: string;
-  cost: number;
-};
+const COURIERS = ["jne", "jnt", "sicepat"];
 
 export default function CheckoutPage() {
-  const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-  const token = localStorage.getItem("token");
   const dispatch = useDispatch();
   const router = useRouter();
+  const token = useSelector((state: RootState) => state.auth.token);
   const cartItems = useSelector((state: RootState) => state.cart.items);
 
   const [isLoading, setIsLoading] = useState(false);
   const [buttonLoading, setButtonLoading] = useState(false);
 
-  const [shippingMethod, setShippingMethod] = useState<"home" | "pickup" | "">(
-    "home",
+  const [savedAddresses, setSavedAddresses] = useState<UserAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
+    null,
   );
+  const [manualAddress, setManualAddress] =
+    useState<ShippingAddressForm | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [address, setAddress] = useState<any>(null);
+  const [guestEmail, setGuestEmail] = useState("");
+  const [notes, setNotes] = useState("");
+  const [voucherCode, setVoucherCode] = useState("");
 
-  const [servicesByIndex, setServicesByIndex] = useState<any>({});
-  const [selectedServices, setSelectedServices] = useState<
-    Record<number, ShippingService>
-  >({});
+  const [rates, setRates] = useState<ShippingRate[]>([]);
+  const [selectedRate, setSelectedRate] = useState<ShippingRate | null>(null);
+  const [ratesLoading, setRatesLoading] = useState(false);
 
-  const servicesArray = Object.values(selectedServices || {});
-
-  // ===============================
-  //     TOTAL SHIPPING COST (HOME DELIVERY)
-  // ===============================
-  const totalShipping = Object.values(selectedServices || {}).reduce(
-    (acc: number, item: any) => acc + (item?.cost || 0),
-    0,
-  );
-
-  // ==============================
-  //    STORE PICKUP AVAILABILITY
-  // ==============================
-  const uniqueStores = new Set(cartItems?.map((item) => item.store));
-  const canPickup = uniqueStores.size === 1;
-
-  const firstItem = cartItems[0];
-  const storeName = canPickup ? firstItem?.storeName : null;
-  const lat = firstItem?.latitude;
-  const lng = firstItem?.longitude;
-
-  // ==============================
-  //       LOAD USER PROFILE
-  // ==============================
+  // Load saved addresses for logged-in users
   useEffect(() => {
     if (!token) return;
 
-    const loadUserProfile = async () => {
+    const loadAddresses = async () => {
+      setIsLoading(true);
       try {
-        setIsLoading(true);
-        const { data: user } = await axios.get(`${BASE_URL}user`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        // set base address info
-        setAddress({
-          userId: user.id,
-          fullName: user.name,
-          phone: user.phone_number,
-          postalCode: user.postal_code,
-          address: user.address,
-
-          provinceId: user.province,
-          cityId: user.city,
-          districtId: user.district,
-
-          provinceName: "",
-          cityName: "",
-          districtName: "",
-        });
-
-        // fetch province → city → district names
-        loadLocationNames(user.province, user.city, user.district);
+        const addresses = await listAddresses();
+        setSavedAddresses(addresses);
+        const primary = addresses.find((a) => a.is_primary) ?? addresses[0];
+        if (primary) setSelectedAddressId(primary.id);
       } catch (error) {
-        setIsLoading(false);
-        console.error("Error fetching user:", error);
+        console.error("Error fetching addresses:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadUserProfile();
-  }, []);
+    loadAddresses();
+  }, [token]);
 
-  // Ambil nama provinsi, kota, kecamatan dari ID
-  const loadLocationNames = async (
-    provId: string,
-    cityId: string,
-    distId: string,
-  ) => {
-    try {
-      setIsLoading(true);
-      const citiesRes = await axios.get(`${BASE_URL}cities/${provId}`);
-      const districtsRes = await axios.get(`${BASE_URL}districts/${cityId}`);
+  const selectedAddress = useMemo(
+    () => savedAddresses.find((a) => a.id === selectedAddressId) ?? null,
+    [savedAddresses, selectedAddressId],
+  );
 
-      const city = citiesRes.data.find((c: any) => c.id == cityId);
-      const district = districtsRes.data.find((d: any) => d.id == distId);
+  // RajaOngkir prices between two sub-districts, so that's what has to be
+  // sent as the destination - both saved addresses and the manual form now
+  // carry a subdistrict id.
+  const destination =
+    manualAddress?.subdistrictId ||
+    (selectedAddress?.subdistrict_id ? String(selectedAddress.subdistrict_id) : null);
 
-      // NOTE: province name ideally from provinces list API
-      // but user only has ID, so quick fetch:
-      const provRes = await axios.get(`${BASE_URL}provinces`);
-      const province = provRes.data.find((p: any) => p.id == provId);
-
-      setAddress((prev: any) => ({
-        ...prev,
-        provinceName: province?.name || "",
-        cityName: city?.name || "",
-        districtName: district?.name || "",
-      }));
-    } catch (error) {
-      setIsLoading(false);
-      console.error("Error loading location names:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // ==============================
-  //       CALCULATE SUBTOTAL
-  // ==============================
-  const subtotal = cartItems?.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+  const totalWeight = cartItems.reduce(
+    (sum, item) => sum + item.weight * item.quantity,
     0,
   );
 
-  // ==============================
-  //     FETCH COURIER SERVICES
-  // ==============================
-  const handleCourierChange = async (e: any, index: number) => {
-    const courier = e.target.value;
+  const subtotal = cartItems.reduce(
+    (sum, item) => sum + item.finalPrice * item.quantity,
+    0,
+  );
 
-    if (!address?.districtId) return;
-
-    // RESET service lama di index ini
-    setSelectedServices((prev: any) => {
-      const updated = { ...prev };
-      delete updated[index]; // ⛔ hapus biar gak ikut ke total
-      return updated;
-    });
-
-    try {
-      const { data } = await axios.get(
-        `${BASE_URL}cost/${address.districtId}/1000/${courier}`,
-      );
-
-      setServicesByIndex((prev: any) => ({
-        ...prev,
-        [index]: data.data,
-      }));
-    } catch (error) {
-      console.error("Error fetching delivery services:", error);
+  useEffect(() => {
+    if (!destination || totalWeight <= 0) {
+      setRates([]);
+      setSelectedRate(null);
+      return;
     }
-  };
 
-  // Disable checkout button jika ada item yang belum pilih layanan (untuk home delivery)
-  const isAllSelected = cartItems.every((_, i) => selectedServices[i]?.service);
-
-  // ==============================
-  //       CHECKOUT PROCESS
-  // ==============================
-  const buildOrderPayload = () => {
-    const isHome = shippingMethod === "home";
-
-    const orderType = isHome ? "HOME DELIVERY" : "PICKUP";
-
-    const products = cartItems?.map((item) => {
-      const fixPrice = item.price - (item.discount || 0);
-      const weightTotal = (item.weight || 0) * item.quantity;
-
-      return {
-        id: item.id,
-        name: item.name,
-        article: item.article,
-        plu: item.plu,
-        color: item.color,
-        size: item.size,
-        quantity: item.quantity,
-        storeId: item.store,
-        storeName: item.storeName,
-        price: item.price,
-        discount: item.discount || 0,
-        fix_price: fixPrice,
-        weight: weightTotal,
-        total: fixPrice * item.quantity,
-      };
-    });
-
-    // BUILD SHIPPING DETAILS
-    const shippingDetails = isHome
-      ? Object.entries(selectedServices).map(([index, s]: any) => ({
-          storeId: cartItems[Number(index)]?.store, // ambil dari cart
-          courier: s.name,
-          service: s.service,
-          cost: s.cost,
-        }))
-      : [];
-
-    const totalShipping = shippingDetails.reduce(
-      (acc, s) => acc + Number(s.cost || 0),
-      0,
-    );
-
-    const payload = {
-      orderType,
-
-      userId: address?.userId || "",
-      name: address?.fullName || "",
-      phone: address?.phone || "",
-
-      address: isHome ? address?.address : null,
-      postalCode: isHome ? address?.postalCode : null,
-      province: isHome ? address?.provinceName : null,
-      city: isHome ? address?.cityName : null,
-      district: isHome ? address?.districtName : null,
-
-      shippingDetails,
-
-      products,
-
-      discount: 0,
-
-      totalWeight: products.reduce((sum, p) => sum + p.weight, 0),
-
-      total: subtotal + totalShipping,
+    const fetchRates = async () => {
+      setRatesLoading(true);
+      setSelectedRate(null);
+      try {
+        const result = await getShippingCost({
+          destination,
+          weight: totalWeight,
+          couriers: COURIERS,
+        });
+        setRates(result);
+      } catch (error) {
+        console.error("Error fetching shipping cost:", error);
+        setRates([]);
+      } finally {
+        setRatesLoading(false);
+      }
     };
 
-    return payload;
-  };
-
-  // ==============================
-  //       RESET SERVICE
-  // ==============================
-  useEffect(() => {
-    if (shippingMethod === "pickup") {
-      setSelectedServices({}); // reset service saat pilih "pickup"
-      setServicesByIndex({}); // reset opsi layanan saat pilih "pickup"
-      return;
-    }
-
-    if (shippingMethod === "home") {
-      setSelectedServices({}); // reset service saat kembali ke "home"
-    }
-  }, [shippingMethod]);
-
-  // ==============================
-  //       HANDLE CHECKOUT
-  // ==============================
-  useEffect(() => {
-    if (window.snap) return;
-
-    const script = document.createElement("script");
-    script.src = process.env.NEXT_PUBLIC_MIDTRANS_SNAP_URL || "";
-    script.setAttribute(
-      "data-client-key",
-      process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "",
-    );
-    script.async = true;
-    document.body.appendChild(script);
-  }, []);
+    fetchRates();
+  }, [destination, totalWeight]);
 
   const handleCheckout = async () => {
-    if (!token) {
-      toast.error("Please log in to proceed with checkout.");
-      router.push("/login");
+    if (cartItems.length === 0) {
+      toast.error("Your cart is empty.");
       return;
     }
 
-    const isHome = shippingMethod === "home";
+    const receiverName =
+      selectedAddress?.receiver_name || manualAddress?.receiverName;
+    const phone = selectedAddress?.phone_number || manualAddress?.phone;
+    const address = selectedAddress?.address || manualAddress?.address;
+    const province = selectedAddress?.province || manualAddress?.provinceName;
+    const city = selectedAddress?.city || manualAddress?.cityName;
+    const district = selectedAddress?.district || manualAddress?.districtName;
+    const postalCode =
+      selectedAddress?.postal_code || manualAddress?.postalCode;
 
-    // ===== VALIDATION (tetap sama) =====
-    if (!address?.fullName || !address?.phone) {
-      return toast.error("Full name and phone number are required.");
+    if (
+      !receiverName ||
+      !phone ||
+      !address ||
+      !province ||
+      !city ||
+      !district ||
+      !postalCode
+    ) {
+      toast.error("Please complete your shipping address.");
+      return;
     }
 
-    if (isHome) {
-      if (!address?.address)
-        return toast.error("Shipping address cannot be empty.");
-      if (!address?.postalCode) return toast.error("Postal code is required.");
-      if (
-        !address?.provinceName ||
-        !address?.cityName ||
-        !address?.districtName
-      ) {
-        return toast.error(
-          "Please complete your province, city, and district details.",
-        );
-      }
-      if (!selectedServices) {
-        return toast.error("Please select a courier and delivery service.");
-      }
+    if (!token && !guestEmail) {
+      toast.error("Please provide your email.");
+      return;
     }
 
-    if (!isHome && !canPickup) {
-      return toast.error(
-        "Store pickup is not available for items from multiple stores.",
-      );
+    if (!selectedRate) {
+      toast.error("Please select a courier and delivery service.");
+      return;
     }
-
-    const payload = buildOrderPayload();
 
     try {
       setButtonLoading(true);
-      const token = localStorage.getItem("token");
 
-      // 1️⃣ CREATE ORDER & GET SNAP TOKEN
-      const res = await axios.post(`${BASE_URL}order`, payload, {
-        headers: { Authorization: `Bearer ${token}` },
+      const response = await submitCheckout({
+        shipping_receiver_name: receiverName,
+        shipping_email: token ? undefined : guestEmail,
+        shipping_phone: phone,
+        shipping_address: address,
+        shipping_province: province,
+        shipping_city: city,
+        shipping_district: district,
+        shipping_postal_code: postalCode,
+        shipping_cost: selectedRate.cost,
+        courier_code: selectedRate.code,
+        courier_service: selectedRate.service,
+        voucher_code: voucherCode || undefined,
+        notes: notes || undefined,
+        items: cartItems.map((item) => ({
+          product_size_id: item.productSizeId,
+          quantity: item.quantity,
+        })),
       });
 
-      const { snap_token } = res.data;
-
-      if (!snap_token) {
-        return toast.error("Failed to get payment token");
+      if (!response.snap_token) {
+        toast.error("Failed to get payment token");
+        return;
       }
 
-      window.snap.pay(snap_token, {
-        onSuccess: function (result: any) {
+      if (typeof window === "undefined" || !window.snap) {
+        toast.error(
+          "Payment service is not ready yet. Please wait a moment and try again.",
+        );
+        return;
+      }
+
+      window.snap.pay(response.snap_token, {
+        onSuccess: () => {
           toast.success("Payment successful 🎉");
           dispatch(clearCart());
-          router.push("/orders");
+          router.push("/dashboard");
         },
-
-        onPending: function (result: any) {
+        onPending: () => {
           toast("Waiting for payment ⏳", { icon: "⏳" });
           dispatch(clearCart());
           router.push("/");
         },
-
-        onError: function (result: any) {
-          dispatch(clearCart());
+        onError: () => {
           toast.error("Payment failed ❌");
         },
-
-        onClose: function () {
-          dispatch(clearCart());
+        onClose: () => {
           toast("Payment popup closed", { icon: "⚠️" });
         },
       });
     } catch (err) {
       console.error(err);
-      toast.error("Checkout failed");
+      toast.error(getErrorMessage(err));
     } finally {
       setButtonLoading(false);
     }
   };
 
-  // ==============================
-  //             RENDER
-  // ==============================
-  if (isLoading)
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-500">
-        <ClipLoader size={40} color="#000" />
+      <div className="p-4 md:p-10 bg-gray-50 min-h-screen animate-pulse">
+        <div className="h-7 w-32 bg-gray-200 mb-6" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="bg-white border p-6 space-y-4">
+            <div className="h-5 w-1/2 bg-gray-200" />
+            <div className="h-16 w-full bg-gray-100" />
+            <div className="h-10 w-40 bg-gray-200" />
+          </div>
+          <div className="space-y-6">
+            <div className="bg-white border p-6 space-y-3">
+              <div className="h-5 w-1/3 bg-gray-200" />
+              <div className="h-4 w-full bg-gray-100" />
+              <div className="h-4 w-2/3 bg-gray-100" />
+            </div>
+          </div>
+        </div>
       </div>
     );
+  }
 
-  // ==============================
-  //             RENDER UI
-  // ==============================
+  if (cartItems.length === 0) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 px-4 text-center">
+        <ShoppingBag size={32} className="text-gray-300" />
+        <div>
+          <p className="font-medium text-zinc-700">Your cart is empty.</p>
+          <p className="text-sm text-zinc-500 mt-1">Add something to check out.</p>
+        </div>
+        <Link
+          href="/"
+          className="mt-2 inline-block bg-black text-white text-xs tracking-wide font-medium px-6 py-3 hover:bg-zinc-800 transition"
+        >
+          CONTINUE SHOPPING
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 md:p-10 bg-gray-50 min-h-screen">
       <h1 className="text-2xl font-semibold mb-6">Checkout</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
         {/* LEFT SIDE */}
-        <div className="bg-white border shadow-sm p-6 space-y-6">
-          {/* SHIPPING OPTIONS */}
+        <div className="bg-white border border-zinc-200 p-6 space-y-6">
           <h2 className="font-semibold text-lg border-b pb-2">
-            SHIPPING OPTIONS
+            SHIPPING ADDRESS
           </h2>
 
-          {/* HOME DELIVERY */}
-          <div className="space-y-3">
-            <label className="flex items-center space-x-2 cursor-pointer">
+          {!token && (
+            <div>
+              <label className="text-sm font-medium mb-2 block">Email</label>
               <input
-                type="radio"
-                name="shipping_method"
-                checked={shippingMethod === "home"}
-                onChange={() => setShippingMethod("home")}
-                className="accent-black"
+                type="email"
+                value={guestEmail}
+                onChange={(e) => setGuestEmail(e.target.value)}
+                className="w-full border border-zinc-300 px-3 py-2 text-sm focus:border-black"
+                placeholder="you@example.com"
               />
-              <span className="text-sm font-medium">Home Delivery</span>
-            </label>
+            </div>
+          )}
 
-            {shippingMethod === "home" && (
-              <div className="border p-4 space-y-4">
-                {/* ADDRESS */}
-                <div>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    Shipping To:
-                    <br />
-                    {address ? (
-                      <>
-                        {address.fullName} <br />
-                        {address.address}, {address.districtName},{" "}
-                        {address.cityName}, {address.provinceName}{" "}
-                        {address.postalCode} <br />
-                        {address.phone}
-                      </>
-                    ) : (
-                      "No address added yet."
-                    )}
-                  </p>
-
-                  <button
-                    onClick={() => setShowModal(true)}
-                    className="mt-3 px-4 py-2 bg-black text-white text-xs hover:bg-gray-800 cursor-pointer"
-                  >
-                    {address ? "MODIFY ADDRESS" : "ADD ADDRESS"}
-                  </button>
-                </div>
-
-                {showModal && (
-                  <ModalShippingAddress
-                    setShowModal={setShowModal}
-                    onSave={setAddress}
-                    data={address}
+          {token && savedAddresses.length > 0 && (
+            <div className="space-y-2">
+              {savedAddresses.map((addr) => (
+                <label
+                  key={addr.id}
+                  className={`flex items-start gap-2 border p-3 cursor-pointer text-sm ${
+                    selectedAddressId === addr.id
+                      ? "border-black"
+                      : "border-gray-200"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="saved_address"
+                    checked={selectedAddressId === addr.id}
+                    onChange={() => {
+                      setSelectedAddressId(addr.id);
+                      setManualAddress(null);
+                    }}
+                    className="mt-1 accent-black"
                   />
-                )}
+                  <span>
+                    <span className="font-medium">{addr.receiver_name}</span> (
+                    {addr.phone_number})
+                    <br />
+                    {addr.address}, {addr.district}, {addr.city},{" "}
+                    {addr.province} {addr.postal_code}
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
 
-                {/* SHIPPING SERVICES */}
-                {cartItems?.map((item, index) => (
-                  <div key={index}>
-                    <span>
-                      Shipping from {formatProductName(item.storeName)}
-                    </span>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">
-                          Courier
-                        </label>
-                        <select
-                          onChange={(e) => handleCourierChange(e, index)}
-                          className="w-full border px-3 py-2 text-sm"
-                        >
-                          <option value="">-- Please Select --</option>
-                          <option value="sicepat">SiCepat</option>
-                          <option value="jne">JNE</option>
-                          <option value="jnt">J&T</option>
-                        </select>
-                      </div>
+          <div>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              {manualAddress ? (
+                <>
+                  {manualAddress.receiverName} <br />
+                  {manualAddress.address}, {manualAddress.districtName},{" "}
+                  {manualAddress.cityName}, {manualAddress.provinceName}{" "}
+                  {manualAddress.postalCode} <br />
+                  {manualAddress.phone}
+                </>
+              ) : !selectedAddress ? (
+                "No address added yet."
+              ) : null}
+            </p>
 
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">
-                          Delivery Service
-                        </label>
-                        <select
-                          value={selectedServices[index]?.service || ""}
-                          onChange={(e) => {
-                            const selected = servicesByIndex[index]?.find(
-                              (s: any) => s.service === e.target.value,
-                            );
-
-                            setSelectedServices((prev: any) => ({
-                              ...prev,
-                              [index]: { ...selected },
-                            }));
-                          }}
-                          className="w-full border px-3 py-2 text-sm"
-                        >
-                          <option value="">-- Please Select --</option>
-                          {servicesByIndex[index]?.map((s: any, i: number) => (
-                            <option key={i} value={s.service}>
-                              {s.service} — {s.description} (
-                              {formatToIdr(s.cost)})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <button
+              onClick={() => setShowModal(true)}
+              className="mt-3 px-4 py-2 bg-black text-white text-xs hover:bg-gray-800 cursor-pointer"
+            >
+              {token
+                ? "USE A DIFFERENT ADDRESS"
+                : manualAddress
+                  ? "MODIFY ADDRESS"
+                  : "ADD ADDRESS"}
+            </button>
           </div>
+
+          {showModal && (
+            <ModalShippingAddress
+              setShowModal={setShowModal}
+              onSave={(form) => {
+                setManualAddress(form);
+                setSelectedAddressId(null);
+              }}
+              data={manualAddress}
+            />
+          )}
 
           <hr />
 
-          {/* STORE PICKUP */}
-          <div className="space-y-1">
-            <label
-              className={`flex items-center space-x-2 ${
-                canPickup ? "cursor-pointer" : "opacity-40 cursor-not-allowed"
-              }`}
-            >
-              <input
-                type="radio"
-                name="shipping_method"
-                disabled={!canPickup}
-                checked={shippingMethod === "pickup"}
-                onChange={() => canPickup && setShippingMethod("pickup")}
-                className="accent-black cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              />
-              <span className="text-sm font-medium">Store Pickup</span>
-            </label>
+          <h2 className="font-semibold text-lg border-b pb-2">
+            SHIPPING SERVICE
+          </h2>
 
-            {!canPickup && (
-              <p className="text-xs text-red-600 ml-6">
-                Pickup not available because your items come from multiple
-                stores.
-              </p>
-            )}
+          {!destination && (
+            <p className="text-sm text-gray-500">
+              Complete your shipping address to see delivery options.
+            </p>
+          )}
 
-            {shippingMethod === "pickup" && canPickup && (
-              <div className="border p-4 text-sm text-gray-700 space-y-3">
-                <p>
-                  <span className="font-semibold">Branch Store:</span>{" "}
-                  {storeName}
+          {destination && ratesLoading && (
+            <p className="text-sm text-gray-500 flex items-center gap-2">
+              <Loader2 size={14} className="animate-spin" />
+              Loading delivery options...
+            </p>
+          )}
+
+          {destination && !ratesLoading && (
+            <div className="space-y-2">
+              {rates.length === 0 && (
+                <p className="text-sm text-gray-500">
+                  No delivery options available.
                 </p>
+              )}
+              {rates.map((rate, index) => (
+                <label
+                  key={`${rate.code}-${rate.service}-${index}`}
+                  className={`flex items-center justify-between border p-3 cursor-pointer text-sm ${
+                    selectedRate?.service === rate.service &&
+                    selectedRate?.code === rate.code
+                      ? "border-black"
+                      : "border-gray-200"
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="courier_rate"
+                      checked={
+                        selectedRate?.service === rate.service &&
+                        selectedRate?.code === rate.code
+                      }
+                      onChange={() => setSelectedRate(rate)}
+                      className="accent-black"
+                    />
+                    <span>
+                      {rate.name} - {rate.service}
+                      <br />
+                      <span className="text-xs text-gray-500">
+                        {rate.description}
+                      </span>
+                    </span>
+                  </span>
+                  <span className="font-medium">{formatToIdr(rate.cost)}</span>
+                </label>
+              ))}
+            </div>
+          )}
 
-                <iframe
-                  width="100%"
-                  height="200"
-                  style={{ border: 0 }}
-                  loading="lazy"
-                  allowFullScreen
-                  src={`https://www.google.com/maps?q=${lat},${lng}&z=15&output=embed`}
-                />
-              </div>
-            )}
+          <hr />
+
+          <div>
+            <label className="text-sm font-medium mb-2 block">
+              Voucher Code
+            </label>
+            <input
+              type="text"
+              value={voucherCode}
+              onChange={(e) => setVoucherCode(e.target.value)}
+              className="w-full border border-zinc-300 px-3 py-2 text-sm focus:border-black"
+              placeholder="Optional"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium mb-2 block">Notes</label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full border border-zinc-300 px-3 py-2 text-sm focus:border-black"
+              rows={2}
+              placeholder="Optional"
+            />
           </div>
         </div>
 
         {/* RIGHT SIDE */}
-        <div className="space-y-6">
+        <div className="space-y-6 md:sticky md:top-20 h-fit">
           {/* PRODUCTS */}
-          <div className="bg-white border shadow-sm p-6 space-y-4">
+          <div className="bg-white border border-zinc-200 p-6 space-y-4">
             <h2 className="font-semibold text-lg border-b pb-2">PRODUCTS</h2>
 
-            {cartItems?.map((item, index) => (
-              <div className="flex justify-between text-sm" key={index}>
-                <p>
-                  {formatProductName(item.name)} ({item.size}) x {item.quantity}
+            {cartItems.map((item) => (
+              <div
+                className="flex justify-between text-sm gap-3"
+                key={item.productSizeId}
+              >
+                <p className="min-w-0">
+                  {formatProductName(item.name)} ({item.size}) × {item.quantity}
                 </p>
-                <p>{formatToIdr(item.price * item.quantity)}</p>
+                <p className="shrink-0">{formatToIdr(item.finalPrice * item.quantity)}</p>
               </div>
             ))}
           </div>
 
           {/* ORDER SUMMARY */}
-          <div className="bg-white border shadow-sm p-6 space-y-3">
+          <div className="bg-white border border-zinc-200 p-6 space-y-3">
             <h2 className="font-semibold text-lg border-b pb-2">
               ORDER SUMMARY
             </h2>
@@ -571,27 +469,20 @@ export default function CheckoutPage() {
 
             <div className="flex justify-between text-sm">
               <p className="text-gray-500">Shipping</p>
-              <p>{formatToIdr(totalShipping)}</p>
+              <p>{formatToIdr(selectedRate?.cost ?? 0)}</p>
             </div>
 
             <hr />
 
             <div className="flex justify-between font-semibold text-sm">
               <p>Total</p>
-              <p>{formatToIdr(subtotal + totalShipping)}</p>
+              <p>{formatToIdr(subtotal + (selectedRate?.cost ?? 0))}</p>
             </div>
-          </div>
 
-          {/* NEXT BUTTON */}
-          <div className="flex justify-center">
             <button
               onClick={handleCheckout}
-              disabled={
-                shippingMethod === "home"
-                  ? !isAllSelected
-                  : false || buttonLoading
-              }
-              className={`text-center bg-black text-white px-6 py-3 text-sm w-1/2 border hover:bg-white hover:text-black hover:border-black transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed`}
+              disabled={buttonLoading || !selectedRate}
+              className="w-full text-center bg-black text-white px-6 py-3 text-sm font-medium tracking-wide border border-black hover:bg-white hover:text-black transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {buttonLoading ? "Loading..." : "CHECKOUT"}
             </button>

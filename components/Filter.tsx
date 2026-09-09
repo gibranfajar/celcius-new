@@ -1,5 +1,9 @@
+"use client";
+
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { getCategories } from "@/lib/api";
+import { Category } from "@/lib/api/types";
 
 type FilterProps = {
   isOpen: boolean;
@@ -8,22 +12,40 @@ type FilterProps = {
 };
 
 export default function Filter({ isOpen, setisOpen, gender }: FilterProps) {
-  const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-  const [data, setData] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const router = useRouter();
 
   useEffect(() => {
-    fetch(`${BASE_URL}categories`)
-      .then((res) => res.json())
-      .then((data) => {
-        const filtered = data.filter((cat: any) => cat.type === gender);
-        setData(filtered);
-      });
-  }, [gender]);
+    getCategories()
+      .then(setCategories)
+      .catch((error) => console.error("Error fetching categories:", error));
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [isOpen]);
+
+  const categoriesByGroup = categories.reduce<Record<string, Category[]>>(
+    (acc, category) => {
+      acc[category.master_category] = acc[category.master_category] || [];
+      acc[category.master_category].push(category);
+      return acc;
+    },
+    {},
+  );
+
+  const goTo = (path: string) => {
+    router.push(path);
+    setisOpen(false);
+  };
 
   return (
     <div
-      className={`fixed top-0 right-0 h-full w-80 bg-white shadow-lg z-50 transform transition-transform duration-300 base-font ${
+      className={`fixed top-0 right-0 h-full w-[85vw] max-w-80 bg-white shadow-lg z-50 transform transition-transform duration-300 base-font ${
         isOpen ? "translate-x-0" : "translate-x-full"
       }`}
     >
@@ -42,32 +64,42 @@ export default function Filter({ isOpen, setisOpen, gender }: FilterProps) {
       {/* Scrollable Content */}
       <div className="h-[calc(100%-56px)] overflow-y-auto p-4">
         <ul className="space-y-2 text-xs">
-          <li>CATEGORY</li>
           <li
-            onClick={() => {
-              router.push(`/products/${gender}/list/apparel`);
-              setisOpen(false);
-            }}
-            className="cursor-pointer"
+            onClick={() => goTo(`/products/${gender}/list`)}
+            className="cursor-pointer font-semibold"
           >
             All
           </li>
-
-          {data.map((category: any) => (
-            <li
-              key={category.id}
-              onClick={() => {
-                router.push(
-                  `/products/${gender}/list/category/${category.slug}`,
-                );
-                setisOpen(false);
-              }}
-              className="cursor-pointer"
-            >
-              {category.name}
-            </li>
-          ))}
+          <li
+            onClick={() => goTo(`/products/${gender}/list/sale`)}
+            className="cursor-pointer font-semibold text-red-600"
+          >
+            Sale
+          </li>
         </ul>
+
+        {Object.entries(categoriesByGroup).length > 0 && (
+          <div className="mt-6 space-y-4 text-xs">
+            {Object.entries(categoriesByGroup).map(([group, items]) => (
+              <div key={group}>
+                <p className="font-semibold uppercase mb-2">{group}</p>
+                <ul className="space-y-1">
+                  {items.map((category) => (
+                    <li
+                      key={category.id}
+                      onClick={() =>
+                        goTo(`/products/${gender}/list/category/${category.slug}`)
+                      }
+                      className="cursor-pointer text-gray-600 hover:text-black"
+                    >
+                      {category.name}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

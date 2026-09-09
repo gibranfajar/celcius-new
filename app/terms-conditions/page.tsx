@@ -1,27 +1,27 @@
 "use client";
 
-import axios from "axios";
 import { useEffect, useState } from "react";
 import { ClipLoader } from "react-spinners";
+import { getPage } from "@/lib/api";
+import { Page } from "@/lib/api/types";
 
 export default function TermsConditionPage() {
-  const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
   const [loading, setLoading] = useState<boolean>(true);
-  const [termConditions, setTermConditions] = useState<any>([]);
-
-  const fetchTermConditions = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get(`${BASE_URL}terms-conditions`);
-      setTermConditions(res.data);
-      setLoading(false);
-    } catch (err) {
-      console.error("Error fetching shipping returns", err);
-    }
-  };
+  const [page, setPage] = useState<Page | null>(null);
 
   useEffect(() => {
-    fetchTermConditions();
+    const fetchPage = async () => {
+      setLoading(true);
+      try {
+        setPage(await getPage("terms_conditions"));
+      } catch (error) {
+        console.error("Error fetching terms & conditions:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPage();
   }, []);
 
   if (loading) {
@@ -34,7 +34,9 @@ export default function TermsConditionPage() {
 
   return (
     <div className="p-8 md:p-16 max-w-4xl mx-auto">
-      <h2 className="text-center text-2xl font-semibold">Terms & Conditions</h2>
+      <h2 className="text-center text-2xl font-semibold">
+        {page?.title || "Terms & Conditions"}
+      </h2>
 
       <hr className="text-zinc-300 my-6" />
 
@@ -45,7 +47,7 @@ export default function TermsConditionPage() {
           [&_ul]:list-disc [&_ul]:pl-6
           [&_li]:mb-3
         "
-        dangerouslySetInnerHTML={{ __html: termConditions.content }}
+        dangerouslySetInnerHTML={{ __html: page?.content || "" }}
       />
     </div>
   );

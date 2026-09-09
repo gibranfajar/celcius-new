@@ -3,59 +3,42 @@
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
-import axios from "axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
-import { setToken } from "@/redux/authSlice";
+import { setToken, setUser } from "@/redux/authSlice";
+import { login } from "@/lib/api";
+import { getErrorMessage } from "@/lib/api/client";
 
 export default function Login() {
-  const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
   const router = useRouter();
   const dispatch = useDispatch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsLoading(true);
 
     try {
-      const response = await axios.post(`${BASE_URL}login`, {
-        email,
-        password,
-      });
+      const response = await login({ email, password });
+      dispatch(setToken(response.token));
+      dispatch(setUser(response.user));
 
-      // Kalau login sukses
-      if (response.status === 200) {
-        // Simpan token di localStorage (opsional)
-        dispatch(setToken(response.data.token));
-
-        toast.success("Login Success!");
-        router.push("/dashboard");
-      }
-    } catch (error: any) {
-      // Kalau request gagal (status 401, 404, dsb)
-      if (error.response) {
-        const status = error.response.status;
-        const message = error.response.data.data || "Failed.";
-
-        if (status === 401) {
-          toast.error("Email or password is wrong!");
-        } else if (status === 404) {
-          toast.error("User not found!");
-        } else {
-          toast.error(message);
-        }
-      } else {
-        toast.error("Login failed!");
-      }
+      toast.success("Login Success!");
+      router.push("/dashboard");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center p-4 md:p-6 seccond-font">
-      <div className="w-full overflow-hidden grid grid-cols-1 md:grid-cols-2">
+    <div className="min-h-[85vh] flex items-center justify-center p-4 md:p-6 seccond-font">
+      <div className="w-full max-w-4xl overflow-hidden grid grid-cols-1 md:grid-cols-2 border border-zinc-200">
         {/* Left - Login */}
         <div className="p-4 md:p-12 flex flex-col justify-center">
           <h1 className="text-2xl font-semibold mb-4 text-center">LOGIN</h1>
@@ -141,26 +124,24 @@ export default function Login() {
             <div className="flex flex-col items-center space-y-3 pt-2">
               <span className="text-sm">
                 Forgot password?{" "}
-                <Link
-                  href="/reset-password"
-                  className="underline hover:text-black"
-                >
+                <Link href="/reset-password" className="underline hover:text-black">
                   Click here!
                 </Link>
               </span>
 
               <button
                 type="submit"
-                className="text-sm bg-black text-white py-2 px-4 w-1/2 hover:bg-white hover:text-black hover:border hover:border-black transition duration-300 ease-in-out cursor-pointer"
+                disabled={isLoading}
+                className="text-sm bg-black text-white py-2 px-4 w-1/2 hover:bg-white hover:text-black hover:border hover:border-black transition duration-300 ease-in-out cursor-pointer disabled:opacity-50"
               >
-                LOGIN
+                {isLoading ? "Loading..." : "LOGIN"}
               </button>
             </div>
           </form>
         </div>
 
         {/* Right - Register Info */}
-        <div className="p-4 space-y-4 flex flex-col justify-center items-center">
+        <div className="p-4 md:p-12 space-y-4 flex flex-col justify-center items-center text-center bg-zinc-50 border-t border-zinc-200 md:border-t-0 md:border-l">
           <h2 className="text-2xl font-semibold mb-3">NEW USER</h2>
           <p className="text-sm text-center">
             If you still don't have a Clcs.co.id account, use this option to

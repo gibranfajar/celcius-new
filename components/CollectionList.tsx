@@ -1,32 +1,53 @@
 import Image from "next/image";
 import Link from "next/link";
+import { LayoutGrid } from "lucide-react";
+import { Collection } from "@/lib/api/types";
+import SkeletonImage from "@/components/SkeletonImage";
 
-export default function CollectionList({ data }: { data: any[] }) {
+export default function CollectionList({
+  data,
+  loading = false,
+}: {
+  data: Collection[];
+  loading?: boolean;
+}) {
+  if (loading) {
+    return (
+      <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6 mt-6 animate-pulse">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="mb-8">
+            <SkeletonImage className="aspect-3/4" />
+            <div className="h-3.5 w-3/4 bg-gray-200 mt-3" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   if (!data || data.length === 0) {
     return (
-      <div className="col-span-3 text-center py-10 text-gray-500">
-        <p className="text-lg font-medium">No collections found.</p>
-        <p className="text-sm">
-          Try changing the category or product type filter.
-        </p>
+      <div className="col-span-full flex flex-col items-center gap-3 text-center py-20 text-gray-500">
+        <LayoutGrid size={28} className="text-gray-300" />
+        <p className="text-sm font-medium text-gray-700">No collections found.</p>
       </div>
     );
   }
 
   return (
     <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6 mt-6">
-      {data.map((item, index) => (
-        <Link key={index} href={`/collection/${item.slug}`} className="mb-8">
-          <Image
-            src={`${process.env.NEXT_PUBLIC_IMAGE_URL}/${item.thumbnail}`}
-            alt={item.title}
-            loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            width={500}
-            height={500}
-          />
-          <h2 className="mt-3 text-base font-medium text-gray-800 group-hover:text-gray-600">
-            {item.title}
+      {data.map((item) => (
+        <Link key={item.id} href={`/collection/${item.slug}`} className="mb-8 group block">
+          <div className="relative aspect-3/4 overflow-hidden bg-zinc-100">
+            <Image
+              src={item.thumbnail_url}
+              alt={item.name}
+              loading="lazy"
+              fill
+              className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+            />
+          </div>
+          <h2 className="mt-3 text-base font-medium text-gray-800 group-hover:text-black transition-colors">
+            {item.name}
           </h2>
         </Link>
       ))}

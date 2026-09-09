@@ -1,332 +1,185 @@
 "use client";
 
-import { RootState } from "@/redux/store";
 import Link from "next/link";
+import { RootState } from "@/redux/store";
 import { useDispatch, useSelector } from "react-redux";
-import { useEffect, useState } from "react";
-import axios from "axios";
 import {
   decrementQuantity,
   incrementQuantity,
   removeFromCart,
 } from "@/redux/cartSlice";
-import ModalBranchStore from "@/components/ModalBranchStore";
-import getUserLocation from "@/lib/getUserLocation";
-import getLocationDetails from "@/lib/getUserLocationDetails";
 import { formatToIdr } from "@/lib/formatToIdr";
 import formatProductName from "@/lib/formatProductName";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { ClipLoader } from "react-spinners";
 import Image from "next/image";
+import { ShoppingBag, Trash2 } from "lucide-react";
 
 export default function Cart() {
   const router = useRouter();
   const dispatch = useDispatch();
   const cartItems = useSelector((state: RootState) => state.cart.items);
-  const [openModal, setOpenModal] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
-  const [userLocation, setUserLocation] = useState<any | null>(null);
-
-  // 🧩 Local state buat stok hasil fetch
-  const [stocks, setStocks] = useState<Record<string, any>>({});
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchStocks = async () => {
-      try {
-        const results: Record<string, any> = {};
-        setIsLoading(true);
-
-        await Promise.all(
-          cartItems.map(async (item) => {
-            const response = await axios.get(
-              `https://golangapi-j5iu.onrender.com/api/global/stock/o/`,
-              {
-                params: {
-                  article: item.article,
-                  size: item.size,
-                  color: item.color,
-                  provinsi: "ALL",
-                },
-              },
-            );
-
-            const matchedStore = response.data.itemDetail?.find(
-              (store: any) => store.store_id === item.store,
-            );
-
-            // key unik per item
-            const key = `${item.article}-${item.size}-${item.store}`;
-
-            results[key] = matchedStore || null;
-          }),
-        );
-
-        // update once
-        setStocks(results);
-      } catch (err) {
-        console.error("Error fetching stock:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (cartItems.length === 0) {
-      setStocks({});
-      setIsLoading(false);
-      return;
-    }
-
-    fetchStocks();
-  }, [cartItems]);
-
-  const fetchUserLocation = async () => {
-    const pos = await getUserLocation();
-    if (pos) {
-      const { latitude, longitude } = pos.coords;
-      const details = await getLocationDetails(latitude, longitude);
-      setUserLocation(details);
-    } else {
-      console.log("User denied or location unavailable.");
-    }
-  };
-
-  useEffect(() => {
-    fetchUserLocation();
-  }, []);
 
   const handleShipping = () => {
-    const token = localStorage.getItem("token");
-
-    if (!token) {
-      toast.error("Please login first.");
+    if (cartItems.length === 0) {
+      toast.error("Your cart is empty.");
       return;
     }
-
     router.push("/checkout");
   };
 
-  let subtotal = 0;
-  cartItems.forEach((item: any) => {
-    subtotal += item.price * item.quantity;
-  });
+  const subtotal = cartItems.reduce(
+    (sum, item) => sum + item.finalPrice * item.quantity,
+    0,
+  );
 
-  // cek apakah ada item yang out of stock
-  const hasOutOfStock = cartItems.some((item: any) => {
-    const stockKey = `${item.article}-${item.size}-${item.store}`;
-    const itemStock = stocks[stockKey];
-    return !itemStock || itemStock.qty <= 0;
-  });
+  const hasOutOfStock = cartItems.some((item) => item.stock <= 0);
 
-  // loading fetch
-  if (isLoading)
+  if (cartItems.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-500">
-        <ClipLoader size={40} color="#000" />
+      <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4 px-4 text-center seccond-font">
+        <ShoppingBag size={32} className="text-gray-300" />
+        <div>
+          <p className="font-medium text-zinc-700">Your cart is empty.</p>
+          <p className="text-sm text-zinc-500 mt-1">
+            Looks like you haven&apos;t added anything yet.
+          </p>
+        </div>
+        <Link
+          href="/"
+          className="mt-2 inline-block bg-black text-white text-xs tracking-wide font-medium px-6 py-3 hover:bg-zinc-800 transition"
+        >
+          CONTINUE SHOPPING
+        </Link>
       </div>
     );
+  }
 
   return (
-    <div className="p-4 seccond-font">
-      <h1 className="text-2xl mb-3">Cart</h1>
+    <div className="p-4 md:p-6 seccond-font max-w-6xl mx-auto">
+      <h1 className="text-2xl mb-6">Cart</h1>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="">
-          <h2 className="bg-black text-white py-2 px-4 text-sm">PRODUCTS</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <h2 className="bg-black text-white py-2.5 px-4 text-xs tracking-wide font-medium">
+            PRODUCTS ({cartItems.length})
+          </h2>
 
-          <div className="space-y-6 p-4">
-            {cartItems.map((item: any, index: number) => {
-              const stockKey = `${item.article}-${item.size}-${item.store}`;
-              const itemStock = stocks[stockKey];
-              const maxStock = itemStock?.qty ?? 0;
-
-              return (
-                <div
-                  key={index}
-                  className="flex flex-col md:flex-row items-start border p-4 gap-4"
-                >
+          <div className="space-y-4 py-4">
+            {cartItems.map((item) => (
+              <div
+                key={item.productSizeId}
+                className="flex flex-col sm:flex-row border border-zinc-200 p-4 gap-4"
+              >
+                <div className="relative w-full sm:w-28 h-40 sm:h-28 shrink-0 bg-zinc-100">
                   <Image
-                    src={`${process.env.NEXT_PUBLIC_IMAGE_URL}/${item.image}`}
+                    src={item.thumbnailUrl}
                     alt={item.name}
-                    className="w-32 h-32 object-cover"
-                    width={128}
-                    height={128}
+                    fill
+                    className="object-cover"
                   />
+                </div>
 
-                  <div className="flex-1 text-sm">
-                    <h3 className="text-base font-semibold mb-2">
-                      {formatProductName(item.name)}
-                    </h3>
+                <div className="flex-1 text-sm min-w-0">
+                  <h3 className="text-base font-semibold mb-1.5">
+                    {formatProductName(item.name)}
+                  </h3>
 
-                    <div className="space-y-1">
-                      <p>
-                        <span className="font-medium">Color</span> -{" "}
-                        {formatProductName(item.color)}, {item.size} (
-                        {item.quantity} pcs)
-                      </p>
-                      <p>
-                        <span className="font-medium">Weight</span> -{" "}
-                        {item.weight} gr
-                      </p>
-                      <p>
-                        <span className="font-medium">SKU</span> -{" "}
-                        {item.article}
-                      </p>
-                      <p>
-                        <span className="font-medium">Branch Store</span> :{" "}
-                        {itemStock?.brand ?? "-"} {itemStock?.kota ?? ""}
-                      </p>
-
-                      <p>
-                        <span className="font-medium">Stock available</span> :{" "}
-                        {itemStock?.qty ?? 0} pcs
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={() => {
-                        setSelectedProduct(item);
-                        setOpenModal(true);
-                      }}
-                      className="mt-3 border border-black px-3 py-1 text-xs hover:bg-black hover:text-white transition cursor-pointer"
-                    >
-                      CHANGE BRANCH
-                    </button>
-                  </div>
-
-                  {openModal && selectedProduct && (
-                    <ModalBranchStore
-                      onRequestLocation={fetchUserLocation}
-                      onClose={() => setOpenModal(false)}
-                      userLocation={userLocation}
-                      dataProduct={selectedProduct}
-                    />
-                  )}
-
-                  <div className="flex flex-col items-end justify-between h-full">
-                    <button
-                      onClick={() => dispatch(removeFromCart(item))}
-                      className="text-gray-400 hover:text-red-500 cursor-pointer"
-                    >
-                      <i className="bi bi-trash text-lg"></i>
-                    </button>
-
-                    <div className="flex items-center border border-gray-300">
-                      <button
-                        onClick={() =>
-                          dispatch(
-                            decrementQuantity({
-                              id: item.id,
-                              store: item.store,
-                            }),
-                          )
-                        }
-                        disabled={item.quantity <= 1}
-                        className="px-2 text-lg cursor-pointer disabled:text-gray-300 disabled:cursor-not-allowed"
-                      >
-                        −
-                      </button>
-                      <span className="px-3">{item.quantity}</span>
-                      <button
-                        onClick={() =>
-                          dispatch(
-                            incrementQuantity({
-                              id: item.id,
-                              store: item.store,
-                            }),
-                          )
-                        }
-                        disabled={item.quantity >= maxStock}
-                        className="px-2 text-lg cursor-pointer disabled:text-gray-300 disabled:cursor-not-allowed"
-                      >
-                        +
-                      </button>
-                    </div>
-
-                    <p className="text-sm font-semibold mt-2">
-                      {formatToIdr(item.price * item.quantity)}
+                  <div className="space-y-0.5 text-zinc-600">
+                    <p>
+                      {formatProductName(item.colorName)} · {item.size}
+                    </p>
+                    <p>{item.weight} gr</p>
+                    <p className={item.stock <= 0 ? "text-red-600" : ""}>
+                      {item.stock > 0 ? `${item.stock} in stock` : "Out of stock"}
                     </p>
                   </div>
                 </div>
-              );
-            })}
+
+                <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-between gap-3">
+                  <button
+                    onClick={() =>
+                      dispatch(removeFromCart({ productSizeId: item.productSizeId }))
+                    }
+                    aria-label="Remove item"
+                    className="text-gray-400 hover:text-red-500 cursor-pointer transition-colors"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+
+                  <div className="flex items-center border border-gray-300">
+                    <button
+                      onClick={() =>
+                        dispatch(decrementQuantity({ productSizeId: item.productSizeId }))
+                      }
+                      disabled={item.quantity <= 1}
+                      className="px-2.5 py-1 text-lg cursor-pointer disabled:text-gray-300 disabled:cursor-not-allowed"
+                    >
+                      −
+                    </button>
+                    <span className="px-3 text-sm">{item.quantity}</span>
+                    <button
+                      onClick={() =>
+                        dispatch(incrementQuantity({ productSizeId: item.productSizeId }))
+                      }
+                      disabled={item.quantity >= item.stock}
+                      className="px-2.5 py-1 text-lg cursor-pointer disabled:text-gray-300 disabled:cursor-not-allowed"
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  <p className="text-sm font-semibold">
+                    {formatToIdr(item.finalPrice * item.quantity)}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Voucher applly and Checkout Summary */}
-        <div className="">
-          <div className="">
-            <h2 className="bg-black text-white py-2 px-4 text-sm">
-              COUPON CODE
-            </h2>
+        {/* Order Summary */}
+        <div className="lg:sticky lg:top-20 h-fit">
+          <h2 className="bg-black text-white py-2.5 px-4 text-xs tracking-wide font-medium">
+            ORDER SUMMARY
+          </h2>
 
-            <div className="flex flex-col md:flex-col items-start p-6 gap-4">
-              <p className="text-xs">
-                If you have a coupon code, please enter it in the box below
+          <div className="border border-t-0 border-zinc-200 p-5 space-y-3">
+            <div className="flex justify-between items-center text-sm">
+              <p className="text-zinc-500">Subtotal</p>
+              <p>{formatToIdr(subtotal)}</p>
+            </div>
+
+            <div className="flex justify-between items-center text-sm">
+              <p className="text-zinc-500">Shipping</p>
+              <p className="text-zinc-500">Calculated at checkout</p>
+            </div>
+
+            <hr className="border-zinc-200" />
+
+            <div className="flex justify-between items-center font-semibold">
+              <p>Total</p>
+              <p>{formatToIdr(subtotal)}</p>
+            </div>
+
+            {hasOutOfStock && (
+              <p className="text-xs text-red-600">
+                Remove out-of-stock items before proceeding to checkout.
               </p>
+            )}
 
-              <input
-                type="text"
-                placeholder="Enter the coupon code"
-                className="border-b px-4 py-2 w-full text-sm focus:outline-none"
-              />
-
-              <button className="bg-black text-white px-4 py-2 text-sm hover:bg-white hover:text-black hover:border transition cursor-pointer">
-                APPLY COUPON
-              </button>
-            </div>
-          </div>
-          <div className="">
-            <h2 className="bg-black text-white py-2 px-4 text-sm">
-              ORDER SUMMARY
-            </h2>
-
-            <div className="flex flex-col items-start p-6 gap-4">
-              <div className="flex justify-between items-center w-full">
-                <p className="text-xs text-zinc-400">Subtotal</p>
-                <p className="text-xs">{formatToIdr(subtotal)}</p>
-              </div>
-
-              <hr className="border-zinc-200 w-full mb-1" />
-
-              <div className="flex justify-between items-center w-full">
-                <p className="text-xs text-zinc-400">Shipping</p>
-                <p className="text-xs">Rp 0</p>
-              </div>
-
-              <hr className="border-zinc-200 w-full mb-1" />
-
-              <div className="flex justify-between items-center w-full">
-                <p className="text-xs text-green-400">Discount</p>
-                <p className="text-xs">Rp 0</p>
-              </div>
-
-              <hr className="border-zinc-200 w-full mb-1" />
-
-              <div className="flex justify-between items-center w-full">
-                <p className="text-xs text-zinc-400">Total</p>
-                <p className="text-xs">{formatToIdr(subtotal)}</p>
-              </div>
-            </div>
-
-            <div className="flex justify-center items-center">
-              <span
-                onClick={() => {
-                  if (hasOutOfStock) return;
-                  handleShipping();
-                }}
-                className={`text-center px-4 py-2 text-sm w-1/2 transition
-                    ${
-                      hasOutOfStock
-                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        : "bg-black text-white border border-transparent hover:bg-white hover:text-black hover:border-black cursor-pointer"
-                    }
-                  `}
-              >
-                NEXT TO SHIPPING
-              </span>
-            </div>
+            <button
+              onClick={handleShipping}
+              disabled={hasOutOfStock}
+              className={`w-full text-center px-4 py-3 text-sm font-medium tracking-wide transition cursor-pointer
+                ${
+                  hasOutOfStock
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-black text-white border border-black hover:bg-white hover:text-black"
+                }`}
+            >
+              NEXT TO SHIPPING
+            </button>
           </div>
         </div>
       </div>

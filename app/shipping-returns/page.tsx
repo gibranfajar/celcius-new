@@ -1,26 +1,27 @@
 "use client";
-import axios from "axios";
+
 import { useEffect, useState } from "react";
 import { ClipLoader } from "react-spinners";
+import { getPage } from "@/lib/api";
+import { Page } from "@/lib/api/types";
 
 export default function ShippingReturnsPage() {
-  const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
   const [loading, setLoading] = useState<boolean>(true);
-  const [shippingReturns, setShippingReturns] = useState<any>([]);
-
-  const fetchShippingReturn = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get(`${BASE_URL}shipping-returns`);
-      setShippingReturns(res.data);
-      setLoading(false);
-    } catch (err) {
-      console.error("Error fetching shipping returns", err);
-    }
-  };
+  const [page, setPage] = useState<Page | null>(null);
 
   useEffect(() => {
-    fetchShippingReturn();
+    const fetchPage = async () => {
+      setLoading(true);
+      try {
+        setPage(await getPage("shipping_delivery"));
+      } catch (error) {
+        console.error("Error fetching shipping & returns:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPage();
   }, []);
 
   if (loading) {
@@ -33,7 +34,9 @@ export default function ShippingReturnsPage() {
 
   return (
     <div className="p-8 md:p-16 max-w-4xl mx-auto">
-      <h2 className="text-center text-2xl font-semibold">Return & Exchange</h2>
+      <h2 className="text-center text-2xl font-semibold">
+        {page?.title || "Shipping & Delivery"}
+      </h2>
 
       <hr className="text-zinc-300 my-6" />
 
@@ -44,7 +47,7 @@ export default function ShippingReturnsPage() {
           [&_ul]:list-disc [&_ul]:pl-6
           [&_li]:mb-3
         "
-        dangerouslySetInnerHTML={{ __html: shippingReturns.content }}
+        dangerouslySetInnerHTML={{ __html: page?.content || "" }}
       />
     </div>
   );

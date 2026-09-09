@@ -1,22 +1,18 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface CartItem {
-  id: string;
+  productSizeId: number;
+  productId: number;
+  slug: string;
   name: string;
-  article: string;
-  color: string;
+  colorName: string;
   size: string;
-  store: string;
-  storeName: string;
-  quantity: number;
+  thumbnailUrl: string;
   price: number;
-  image: string;
-  fix_price: number;
-  plu: string | null;
-  latitude?: number;
-  longitude?: number;
-  weight?: number;
-  discount?: number;
+  finalPrice: number;
+  weight: number;
+  stock: number;
+  quantity: number;
 }
 
 interface CartState {
@@ -31,105 +27,52 @@ const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
-    // 🛒 Tambah item baru / update quantity kalau sudah ada
     addToCart: (state, action: PayloadAction<Omit<CartItem, "quantity">>) => {
       const newItem = action.payload;
-
       const existingItem = state.items.find(
-        (item) =>
-          item.id === newItem.id &&
-          item.store === newItem.store &&
-          item.plu === newItem.plu,
+        (item) => item.productSizeId === newItem.productSizeId,
       );
 
       if (existingItem) {
-        existingItem.quantity += 1;
+        existingItem.quantity = Math.min(
+          existingItem.quantity + 1,
+          existingItem.stock,
+        );
       } else {
         state.items.push({ ...newItem, quantity: 1 });
       }
     },
 
-    updateCartStore: (
-      state,
-      action: PayloadAction<{
-        id: string;
-        oldStore: string;
-        newStore: string;
-        newPLU: string | null;
-        newStoreName: string;
-        latitude?: number;
-        longitude?: number;
-      }>,
-    ) => {
-      const {
-        id,
-        oldStore,
-        newStore,
-        newPLU,
-        newStoreName,
-        latitude,
-        longitude,
-      } = action.payload;
-
-      const existingItem = state.items.find(
-        (item) => item.id === id && item.store === oldStore,
-      );
-
-      if (existingItem) {
-        existingItem.store = newStore;
-        existingItem.plu = newPLU;
-        existingItem.storeName = newStoreName;
-
-        if (latitude) existingItem.latitude = latitude;
-        if (longitude) existingItem.longitude = longitude;
-      }
-    },
-
-    // ❌ Hapus item dari cart berdasarkan id + store
-    removeFromCart: (
-      state,
-      action: PayloadAction<{ id: string; store: string }>,
-    ) => {
+    removeFromCart: (state, action: PayloadAction<{ productSizeId: number }>) => {
       state.items = state.items.filter(
-        (item) =>
-          item.id !== action.payload.id || item.store !== action.payload.store,
+        (item) => item.productSizeId !== action.payload.productSizeId,
       );
     },
 
-    // 🧮 Tambah jumlah item (+1)
-    incrementQuantity: (
-      state,
-      action: PayloadAction<{ id: string; store: string }>,
-    ) => {
+    incrementQuantity: (state, action: PayloadAction<{ productSizeId: number }>) => {
       const item = state.items.find(
-        (i) => i.id === action.payload.id && i.store === action.payload.store,
+        (i) => i.productSizeId === action.payload.productSizeId,
       );
-      if (item) {
+      if (item && item.quantity < item.stock) {
         item.quantity += 1;
       }
     },
 
-    // 🔽 Kurangi jumlah item (-1) dan hapus kalau quantity = 0
-    decrementQuantity: (
-      state,
-      action: PayloadAction<{ id: string; store: string }>,
-    ) => {
+    decrementQuantity: (state, action: PayloadAction<{ productSizeId: number }>) => {
       const item = state.items.find(
-        (i) => i.id === action.payload.id && i.store === action.payload.store,
+        (i) => i.productSizeId === action.payload.productSizeId,
       );
       if (item) {
         if (item.quantity > 1) {
           item.quantity -= 1;
         } else {
           state.items = state.items.filter(
-            (i) =>
-              i.id !== action.payload.id || i.store !== action.payload.store,
+            (i) => i.productSizeId !== action.payload.productSizeId,
           );
         }
       }
     },
 
-    // 🧹 Hapus semua item
     clearCart: (state) => {
       state.items = [];
     },
@@ -138,7 +81,6 @@ const cartSlice = createSlice({
 
 export const {
   addToCart,
-  updateCartStore,
   removeFromCart,
   incrementQuantity,
   decrementQuantity,

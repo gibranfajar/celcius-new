@@ -1,52 +1,92 @@
 "use client";
 
-import axios from "axios";
 import Image from "next/image";
-import { useEffect, useState, useMemo } from "react";
-import { ClipLoader } from "react-spinners";
+import { useEffect, useState } from "react";
+import { MapPin, Phone, Clock } from "lucide-react";
+import { getLocations } from "@/lib/api";
+import { Location, ProductType } from "@/lib/api/types";
+import SkeletonImage from "@/components/SkeletonImage";
 
-type Gender = "men" | "women";
-type Province = {
-  id: number;
-  name: string;
+function formatTime(time: string | null) {
+  if (!time) return "-";
+  return time.slice(0, 5);
+}
+
+const DAY_LABELS: Record<string, string> = {
+  monday: "Mon",
+  tuesday: "Tue",
+  wednesday: "Wed",
+  thursday: "Thu",
+  friday: "Fri",
+  saturday: "Sat",
+  sunday: "Sun",
 };
-type LocationItem = {
-  id: number;
-  name: string;
-  province: string;
-  address: string;
-  operational_time: string;
-  operational_days: string;
-  type: Gender;
-};
+
+function StoreCard({ item }: { item: Location }) {
+  return (
+    <div className="border border-zinc-200 p-6 hover:border-zinc-400 transition-colors">
+      <h2 className="font-semibold text-base">{item.store_name}</h2>
+
+      <div className="flex items-start gap-2 mt-3 text-sm text-zinc-600">
+        <MapPin size={15} className="mt-0.5 shrink-0 text-zinc-400" />
+        <p>{item.address}</p>
+      </div>
+
+      {item.phone_number && (
+        <div className="flex items-center gap-2 mt-2 text-sm text-zinc-600">
+          <Phone size={15} className="shrink-0 text-zinc-400" />
+          <a href={`tel:${item.phone_number}`} className="nav-link w-fit">
+            {item.phone_number}
+          </a>
+        </div>
+      )}
+
+      {item.maps_url && (
+        <a
+          href={item.maps_url}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-block mt-3 text-xs font-medium tracking-wide underline underline-offset-2 hover:text-zinc-500"
+        >
+          GET DIRECTIONS
+        </a>
+      )}
+
+      {item.operational_hours.length > 0 && (
+        <div className="mt-5 pt-4 border-t border-zinc-100">
+          <div className="flex items-center gap-2 text-xs font-semibold tracking-wide mb-2 text-zinc-500">
+            <Clock size={13} />
+            OPENING HOURS
+          </div>
+          <ul className="text-xs space-y-1.5 text-zinc-600">
+            {item.operational_hours.map((hour) => (
+              <li key={hour.day_of_week} className="flex justify-between">
+                <span>{DAY_LABELS[hour.day_of_week] ?? hour.day_of_week}</span>
+                <span className={hour.is_closed ? "text-zinc-400" : ""}>
+                  {hour.is_closed
+                    ? "Closed"
+                    : `${formatTime(hour.open_time)} – ${formatTime(hour.close_time)}`}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function LocationPage() {
-  const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-  const [loading, setLoading] = useState<boolean>(false);
-  const [location, setLocation] = useState<Gender>("men");
-  const [provinces, setProvinces] = useState<Province[]>([]);
-  const [dataLocation, setDataLocation] = useState<LocationItem[]>([]);
-  const [selectedProvince, setSelectedProvince] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(true);
+  const [gender, setGender] = useState<ProductType>("men");
+  const [locations, setLocations] = useState<Location[]>([]);
 
-  // 🔹 Fetch data dari backend
   useEffect(() => {
-    const fetchProvinces = async () => {
+    const fetchLocations = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(`${BASE_URL}provinces`);
-        setProvinces(response.data);
-      } catch (error) {
-        console.error("Error fetching provinces:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchDataLocation = async () => {
-      setLoading(true);
-      try {
-        const response = await axios.get(`${BASE_URL}locations`);
-        setDataLocation(response.data);
+        const data = await getLocations({ type: gender });
+        setLocations(data);
       } catch (error) {
         console.error("Error fetching locations:", error);
       } finally {
@@ -54,108 +94,61 @@ export default function LocationPage() {
       }
     };
 
-    fetchProvinces();
-    fetchDataLocation();
-  }, []);
-
-  // 🔹 Toggle antara Men / Women
-  const toggleLocation = () => {
-    setLocation((prev) => (prev === "men" ? "women" : "men"));
-  };
-
-  // 🔹 Filter data berdasarkan gender & provinsi
-  const filteredData = useMemo(() => {
-    return dataLocation.filter((item) => {
-      const matchGender = item.type === location;
-      const matchProvince =
-        selectedProvince === "" ||
-        item.province
-          .toLowerCase()
-          .includes(
-            provinces
-              .find((p) => p.id === Number(selectedProvince))
-              ?.name.toLowerCase() ?? "",
-          );
-      return matchGender && matchProvince;
-    });
-  }, [dataLocation, location, selectedProvince, provinces]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-gray-500">
-        <ClipLoader />
-      </div>
-    );
-  }
+    fetchLocations();
+  }, [gender]);
 
   return (
     <div className="min-h-screen">
       {/* Banner */}
-      <Image
-        src={
-          location === "men"
-            ? "/images/locationmen.jpg"
-            : "/images/location-women.jpg"
-        }
-        alt={`${location} banner`}
-        className="w-full object-cover shadow-md transition-all duration-300"
-        width={1920}
-        height={400}
-      />
-
-      {/* Toggle Button */}
-      <button
-        onClick={toggleLocation}
-        className="bg-black text-white py-2 w-full my-4 hover:bg-white hover:text-black transition-all duration-200 cursor-pointer"
-      >
-        {location === "men" ? "Women Locations" : "Men Locations"}
-      </button>
-
-      {/* Select Area */}
-      <div className="flex flex-col justify-center items-center">
-        <div className="mb-12 mt-6">
-          <label htmlFor="area" className="text-sm mb-2 block">
-            Select Area
-          </label>
-          <select
-            id="area"
-            value={selectedProvince}
-            onChange={(e) => setSelectedProvince(e.target.value)}
-            className="border-b border-black w-72 block text-sm focus:outline-none"
-          >
-            <option value="">All</option>
-            {provinces.map((province) => (
-              <option key={province.id} value={province.id}>
-                {province.name}
-              </option>
-            ))}
-          </select>
+      <div className="relative w-full aspect-16/7 md:aspect-21/6">
+        <Image
+          src={gender === "men" ? "/images/locationmen.jpg" : "/images/location-women.jpg"}
+          alt={`${gender} store locations`}
+          fill
+          priority
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+          <h1 className="text-white text-2xl md:text-4xl tracking-wide base-font">
+            STORE LOCATOR
+          </h1>
         </div>
       </div>
 
-      {/* Data grid */}
-      <div className="px-6">
-        {filteredData.length === 0 ? (
-          <p className="text-center text-gray-500 my-8">
-            No locations found for {location === "men" ? "Men" : "Women"} in{" "}
-            {selectedProvince
-              ? provinces.find((p) => p.id === Number(selectedProvince))?.name
-              : "All Provinces"}
-            .
+      {/* Toggle */}
+      <div className="flex justify-center py-6 px-4">
+        <div className="inline-flex border border-zinc-300">
+          {(["men", "women"] as ProductType[]).map((g) => (
+            <button
+              key={g}
+              onClick={() => setGender(g)}
+              className={`px-6 py-2 text-xs tracking-wide cursor-pointer transition-colors ${
+                gender === g
+                  ? "bg-black text-white"
+                  : "bg-white text-zinc-600 hover:text-black"
+              }`}
+            >
+              {g === "men" ? "MEN" : "WOMEN"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="px-4 md:px-6 pb-16 max-w-6xl mx-auto">
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonImage key={i} className="h-56" />
+            ))}
+          </div>
+        ) : locations.length === 0 ? (
+          <p className="text-center text-gray-500 py-16">
+            No locations found for {gender === "men" ? "Men" : "Women"}.
           </p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {filteredData.map((item) => (
-              <div
-                key={item.id}
-                className="p-6 text-center transition-all duration-200"
-              >
-                <h2 className="font-semibold">{item.name}</h2>
-                <p className="text-sm my-2">{item.address}</p>
-                <hr className="text-zinc-400 mb-2" />
-                <p className="text-sm">{item.operational_time}</p>
-                <p className="text-sm">{item.operational_days}</p>
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {locations.map((item) => (
+              <StoreCard key={item.id} item={item} />
             ))}
           </div>
         )}

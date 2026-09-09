@@ -10,518 +10,405 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
-import axios from "axios";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { RootState } from "@/redux/store";
 import { useSelector } from "react-redux";
+import { getCategories, getCollections, getLookbooks } from "@/lib/api";
+import { Category, Collection, Lookbook } from "@/lib/api/types";
+
+// The backend's `categories` endpoint has no gender/type field (only
+// `master_category`: apparel/accessories/footwear), so the same category
+// list is shown under both Mens and Womens - only `collections`/`lookbooks`
+// (which do carry a men/women `type`) can be split per gender. Category
+// links do filter real products now (`?category=slug`).
+function CategoryColumns({
+  categories,
+  group,
+  gender,
+}: {
+  categories: Category[];
+  group: string;
+  gender: "men" | "women";
+}) {
+  const items = categories.filter((c) => c.master_category === group);
+  if (items.length === 0) return null;
+
+  return (
+    <ul className="flex flex-col gap-1">
+      {items.map((category) => (
+        <li key={category.id}>
+          <Link
+            href={`/products/${gender}/list/category/${category.slug}`}
+            className="text-xs text-zinc-500 hover:text-zinc-400"
+          >
+            {category.name}
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 export default function DesktopNavbar() {
-  const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
   const token = useSelector((state: RootState) => state.auth.token);
 
   const [isOpenSearch, setIsOpenSearch] = useState(false);
   const [isOpenCarts, setIsOpenCarts] = useState(false);
-  const [campaigns, setCampaigns] = useState<any[]>([]);
-  const [dataCollection, setDataCollection] = useState<any[]>([]);
-  const [dataContent, setDataContent] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [lookbooks, setLookbooks] = useState<Lookbook[]>([]);
   const cartItems = useSelector((state: RootState) => state.cart.items);
 
   useEffect(() => {
-    const fetchCollections = async () => {
-      try {
-        const response = await axios.get(`${BASE_URL}campaign/list`);
-        setDataCollection(response.data);
-        setCampaigns(response.data);
-      } catch (err: any) {
-        console.error("Error fetching collections:", err);
-      }
-    };
+    getCategories()
+      .then(setCategories)
+      .catch((error) => console.error("Error fetching categories:", error));
 
-    const fetchContents = async () => {
-      try {
-        const response = await axios.get(`${BASE_URL}collection/list`);
-        setDataContent(response.data);
-      } catch (err: any) {
-        console.error("Error fetching collections:", err);
-      }
-    };
+    getCollections()
+      .then((res) => setCollections(res.data))
+      .catch((error) => console.error("Error fetching collections:", error));
 
-    const fetchCategory = async () => {
-      try {
-        const response = await axios.get(`${BASE_URL}categories`);
-
-        setCategories(response.data);
-      } catch (err: any) {
-        console.error("Error fetching collections:", err);
-      }
-    };
-
-    fetchCategory();
-    fetchCollections();
-    fetchContents();
+    getLookbooks()
+      .then((res) => setLookbooks(res.data))
+      .catch((error) => console.error("Error fetching lookbooks:", error));
   }, []);
 
-  const chunkedCollection = useMemo(() => {
-    const chunkSize = 6;
-    const chunks: any[][] = [];
-    for (let i = 0; i < dataCollection.length; i += chunkSize) {
-      chunks.push(dataCollection.slice(i, i + chunkSize));
-    }
-    return chunks;
-  }, [dataCollection]);
+  const MEGA_MENU_CHUNK_SIZE = 5;
 
-  const chunkedContent = useMemo(() => {
-    const chunkSize = 6;
-    const chunks: any[][] = [];
-    for (let i = 0; i < dataContent.length; i += chunkSize) {
-      chunks.push(dataContent.slice(i, i + chunkSize));
+  const chunkedCollection = useMemo(() => {
+    const chunks: Collection[][] = [];
+    for (let i = 0; i < collections.length; i += MEGA_MENU_CHUNK_SIZE) {
+      chunks.push(collections.slice(i, i + MEGA_MENU_CHUNK_SIZE));
     }
     return chunks;
-  }, [dataContent]);
+  }, [collections]);
+
+  const chunkedLookbooks = useMemo(() => {
+    const chunks: Lookbook[][] = [];
+    for (let i = 0; i < lookbooks.length; i += MEGA_MENU_CHUNK_SIZE) {
+      chunks.push(lookbooks.slice(i, i + MEGA_MENU_CHUNK_SIZE));
+    }
+    return chunks;
+  }, [lookbooks]);
+
+  const renderGenderMenu = (gender: "men" | "women", label: string) => (
+    <li className="relative group cursor-pointer text-xs tracking-wide">
+      <Link href={gender === "men" ? "/" : "/women"} className="nav-link">
+        {label}
+      </Link>
+      <div
+        className="fixed left-0 right-0 top-10 bg-white -z-10 py-8 shadow-lg
+          opacity-0 invisible -translate-y-1 pointer-events-none
+          transition-all duration-300 ease-out
+          group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:pointer-events-auto"
+      >
+        <div className="grid grid-cols-2  px-6">
+          {/* Kolom Kiri: kategori */}
+          <div className="grid grid-cols-3 text-sm">
+            <div>
+              <p className="font-semibold text-xs tracking-wide mb-3">
+                APPAREL
+              </p>
+              <Link
+                href={`/products/${gender}/list`}
+                className=" text-xs text-zinc-500 hover:text-black cursor-pointer block mb-2"
+              >
+                View all
+              </Link>
+              <CategoryColumns
+                categories={categories}
+                group="apparel"
+                gender={gender}
+              />
+            </div>
+
+            <div className="flex flex-col gap-5">
+              <div>
+                <p className="font-semibold text-xs tracking-wide mb-3">
+                  ACCESSORIES
+                </p>
+                <CategoryColumns
+                  categories={categories}
+                  group="accessories"
+                  gender={gender}
+                />
+              </div>
+              <div>
+                <p className="font-semibold text-xs tracking-wide mb-3">
+                  FOOTWEAR
+                </p>
+                <CategoryColumns
+                  categories={categories}
+                  group="footwear"
+                  gender={gender}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <p className="font-semibold text-xs tracking-wide mb-3">
+                {label} PAGE
+              </p>
+              <Link
+                href={`/products/${gender}/list/sale`}
+                className="nav-link text-xs text-red-600 hover:text-red-500 cursor-pointer w-fit"
+              >
+                SALE
+              </Link>
+            </div>
+          </div>
+
+          {/* Kolom Kanan: collections gender ini */}
+          <div className="grid grid-cols-3 gap-4">
+            {collections
+              .filter((item) => item.type === gender)
+              .slice(0, 3)
+              .map((item) => (
+                <Link
+                  href={`/collection/${item.slug}`}
+                  key={item.id}
+                  className="flex flex-col group/tile"
+                >
+                  <div className="aspect-3/4 overflow-hidden bg-zinc-100">
+                    <img
+                      src={item.thumbnail_url}
+                      alt={item.name}
+                      className="w-full h-full object-cover cursor-pointer transition-transform duration-500 ease-out group-hover/tile:scale-105"
+                    />
+                  </div>
+                  <p className="text-sm mt-2 text-zinc-700 group-hover/tile:text-black transition-colors">
+                    {item.name}
+                  </p>
+                </Link>
+              ))}
+          </div>
+        </div>
+      </div>
+    </li>
+  );
 
   return (
-    <div className="hidden md:flex bg-white justify-between items-center py-4 px-6 sticky top-0 z-50 seccond-font">
-      {/* navbar kiri */}
-      <ul className="flex items-center gap-4">
-        <li className="relative group cursor-pointer hover:underline text-xs">
-          <Link href="/">MENS</Link>
-          <div className="fixed left-0 right-0 top-[32px] bg-white -z-10 hidden group-hover:block py-6 shadow-md">
-            <div className="grid grid-cols-2 w-full px-6">
-              {/* Kolom Kiri: 3 kolom menu */}
-              <div className="grid grid-cols-3 text-sm">
-                <ul className="flex flex-col text-sm gap-1">
-                  <li className="font-semibold text-sm">APPAREL</li>
-                  <Link
-                    href="/products/men/list/apparel"
-                    className="text-xs hover:text-zinc-400 cursor-pointer"
-                  >
-                    View all
-                  </Link>
-                  {categories
-                    .filter(
-                      (category: any) =>
-                        category.type === "men" &&
-                        category.parent === "apparel",
-                    )
-                    .map((category: any) => (
-                      <Link
-                        key={category.id}
-                        href={`/products/men/list/category/${category.slug}`}
-                        className="text-xs hover:text-zinc-400 cursor-pointer"
-                      >
-                        {category.name}
-                      </Link>
-                    ))}
-                </ul>
+    // The inner row carries `backdrop-blur`, not this wrapper: `backdrop-filter`
+    // creates a new containing block for `position: fixed` descendants, which
+    // would otherwise break CartBar/SearchBar/the overlay (all fixed, all
+    // rendered further down as children of this component).
+    <div className="hidden md:block sticky top-0 z-50 seccond-font">
+      <div className="flex bg-white/95 backdrop-blur-sm justify-between items-center py-4 px-6 border-b border-zinc-100">
+        {/* navbar kiri */}
+        <ul className="flex items-center gap-6">
+          {renderGenderMenu("men", "MENS")}
+          {renderGenderMenu("women", "WOMENS")}
 
-                {/* 🔹 KOLOM 2: ACCESSORIES & FOOTWEAR */}
-                <div className="flex flex-col gap-3">
-                  <ul className="mb-3 flex flex-col gap-1">
-                    <li className="font-semibold text-sm">ACCESSORIES</li>
-                    <Link
-                      href="/products/men/list/accessories"
-                      className="text-xs hover:text-zinc-400 cursor-pointer"
-                    >
-                      View All
-                    </Link>
-                    {categories
-                      .filter(
-                        (category: any) =>
-                          category.type === "men" &&
-                          category.parent === "accessories",
-                      )
-                      .map((category: any) => (
-                        <Link
-                          key={category.id}
-                          href={`/products/men/list/category/${category.slug}`}
-                          className="text-xs hover:text-zinc-400 cursor-pointer"
-                        >
-                          {category.name}
-                        </Link>
-                      ))}
-                  </ul>
-
-                  <ul className="flex flex-col gap-1">
-                    <li className="font-semibold text-sm">FOOTWEAR</li>
-                    <Link
-                      href="/products/men/list/footwear"
-                      className="text-xs hover:text-zinc-400 cursor-pointer"
-                    >
-                      View All
-                    </Link>
-                    {categories
-                      .filter(
-                        (category: any) =>
-                          category.type === "men" &&
-                          category.parent === "footwear",
-                      )
-                      .map((category: any) => (
-                        <Link
-                          key={category.id}
-                          href={`/products/men/list/category/${category.slug}`}
-                          className="text-xs hover:text-zinc-400 cursor-pointer"
-                        >
-                          {category.name}
-                        </Link>
-                      ))}
-                  </ul>
-                </div>
-
-                {/* 🔹 KOLOM 3: CAMPAIGN / BLOG */}
-                <div className="flex flex-col gap-3">
-                  <ul className="flex flex-col text-sm gap-1">
-                    <li className="font-semibold text-sm">CAMPAIGN</li>
-                    {campaigns
-                      .filter((item) => item.type === "men")
-                      .map((item) => (
-                        <Link
-                          key={item.id}
-                          href={`/campaign/${item.slug}`}
-                          className="text-xs hover:text-zinc-400 cursor-pointer"
-                        >
-                          {item.title}
-                        </Link>
-                      ))}
-                  </ul>
-                  <ul className="flex flex-col text-sm gap-1">
-                    <li className="font-semibold text-sm">MENS PAGE</li>
-                    <Link
-                      href="/products/men/list/sale"
-                      className="text-xs text-red-600 hover:text-red-400 cursor-pointer"
-                    >
-                      SALE
-                    </Link>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Kolom Kanan: 3 gambar */}
-              <div className="grid grid-cols-3 gap-4">
-                {dataContent
-                  .filter((item) => item.type === "men")
-                  .slice(0, 3)
-                  .map((item, i) => (
-                    <Link
-                      href={`/collection/${item.slug}`}
-                      key={i}
-                      className="flex flex-col"
-                    >
-                      <img
-                        src={`${process.env.NEXT_PUBLIC_IMAGE_URL}/${item.thumbnail}`}
-                        alt={item.title}
-                        className="w-full h-auto object-cover cursor-pointer"
-                      />
-                      <p className="text-sm mt-2">{item.title}</p>
-                    </Link>
-                  ))}
-              </div>
-            </div>
-          </div>
-        </li>
-
-        <li className="relative group cursor-pointer hover:underline text-xs">
-          <Link href="/women">WOMENS</Link>
-          <div className="fixed left-0 right-0 top-[32px] bg-white -z-10 hidden group-hover:block py-6 shadow-md">
-            <div className="grid grid-cols-2 w-full px-6">
-              {/* Kolom Kiri: 3 kolom menu */}
-              <div className="grid grid-cols-3 text-sm">
-                <ul className="flex flex-col text-sm gap-1">
-                  <li className="font-semibold text-sm">APPAREL</li>
-                  <Link
-                    href="/products/women/list/apparel"
-                    className="text-xs hover:text-zinc-400 cursor-pointer"
-                  >
-                    View all
-                  </Link>
-                  {categories
-                    .filter(
-                      (category: any) =>
-                        category.type === "women" &&
-                        category.parent === "apparel",
-                    )
-                    .map((category: any) => (
-                      <Link
-                        key={category.id}
-                        href={`/products/women/list/category/${category.slug}`}
-                        className="text-xs hover:text-zinc-400 cursor-pointer"
-                      >
-                        {category.name}
-                      </Link>
-                    ))}
-                </ul>
-
-                {/* 🔹 KOLOM 2: ACCESSORIES & FOOTWEAR */}
-                <div className="flex flex-col gap-3">
-                  <ul className="mb-3 flex flex-col gap-1">
-                    <li className="font-semibold text-sm">ACCESSORIES</li>
-                    <Link
-                      href="/products/women/list/accessories"
-                      className="text-xs hover:text-zinc-400 cursor-pointer"
-                    >
-                      View All
-                    </Link>
-                    {categories
-                      .filter(
-                        (category: any) =>
-                          category.type === "women" &&
-                          category.parent === "accessories",
-                      )
-                      .map((category: any) => (
-                        <Link
-                          key={category.id}
-                          href={`/products/women/list/category/${category.slug}`}
-                          className="text-xs hover:text-zinc-400 cursor-pointer"
-                        >
-                          {category.name}
-                        </Link>
-                      ))}
-                  </ul>
-
-                  <ul className="flex flex-col gap-1">
-                    <li className="font-semibold text-sm">FOOTWEAR</li>
-                    <Link
-                      href="/products/women/list/footwear"
-                      className="text-xs hover:text-zinc-400 cursor-pointer"
-                    >
-                      View All
-                    </Link>
-                    {categories
-                      .filter(
-                        (category: any) =>
-                          category.type === "women" &&
-                          category.parent === "footwear",
-                      )
-                      .map((category: any) => (
-                        <Link
-                          key={category.id}
-                          href={`/products/women/list/category/${category.slug}`}
-                          className="text-xs hover:text-zinc-400 cursor-pointer"
-                        >
-                          {category.name}
-                        </Link>
-                      ))}
-                  </ul>
-                </div>
-
-                {/* 🔹 KOLOM 3: CAMPAIGN / BLOG */}
-                <div className="flex flex-col gap-3">
-                  <ul className="flex flex-col text-sm gap-1">
-                    <li className="font-semibold text-sm">CAMPAIGN</li>
-                    {campaigns
-                      .filter((item) => item.type === "women")
-                      .map((item) => (
-                        <Link
-                          key={item.id}
-                          href={`/campaign/${item.slug}`}
-                          className="text-xs hover:text-zinc-400 cursor-pointer"
-                        >
-                          {item.title}
-                        </Link>
-                      ))}
-                  </ul>
-                  <ul className="flex flex-col text-sm gap-1">
-                    <li className="font-semibold text-sm">WOMENS PAGE</li>
-                    <Link
-                      href="/products/women/list/sale"
-                      className="text-xs text-red-600 hover:text-red-400 cursor-pointer"
-                    >
-                      SALE
-                    </Link>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Kolom Kanan: 3 gambar */}
-              <div className="grid grid-cols-3 gap-4">
-                {dataContent
-                  .filter((item) => item.type === "women")
-                  .slice(0, 3)
-                  .map((item, i) => (
-                    <Link
-                      href={`/collection/${item.slug}`}
-                      key={i}
-                      className="flex flex-col"
-                    >
-                      <img
-                        src={`${process.env.NEXT_PUBLIC_IMAGE_URL}/${item.thumbnail}`}
-                        alt={item.title}
-                        className="w-full h-auto object-cover cursor-pointer"
-                      />
-                      <p className="text-sm mt-2">{item.title}</p>
-                    </Link>
-                  ))}
-              </div>
-            </div>
-          </div>
-        </li>
-
-        <li className="relative group cursor-pointer hover:underline text-xs">
-          COLLECTION
-          <div className="fixed left-0 right-0 top-[32px] bg-white -z-10 hidden group-hover:block py-6 shadow-md">
-            <Swiper
-              modules={[Navigation]}
-              navigation={{
-                nextEl: ".swiper-button-next-custom",
-                prevEl: ".swiper-button-prev-custom",
-              }}
-              spaceBetween={20}
-              slidesPerView={1}
+          <li className="relative group cursor-pointer text-xs tracking-wide">
+            <span className="nav-link">COLLECTIONS</span>
+            <div
+              className="fixed left-0 right-0 top-10 bg-white -z-10 py-8 shadow-lg
+              opacity-0 invisible -translate-y-1 pointer-events-none
+              transition-all duration-300 ease-out
+              group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:pointer-events-auto"
             >
-              {chunkedCollection.map((group, index) => (
-                <SwiperSlide key={index}>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 px-6">
-                    {group.map((item, i) => (
-                      <Link
-                        href={`/campaign/${item.slug}`}
-                        key={i}
-                        className="flex flex-col"
-                      >
-                        <img
-                          src={`${process.env.NEXT_PUBLIC_IMAGE_URL}/${item.thumbnail}`}
-                          alt={`collection-${item.title}`}
-                          className="w-full h-auto object-cover cursor-pointer"
-                        />
-                        <p className="text-sm mt-2">{item.title}</p>
-                      </Link>
-                    ))}
-                  </div>
-                </SwiperSlide>
-              ))}
-            </Swiper>
-
-            {/* navigation */}
-            <div className="flex justify-between gap-6 mt-4 px-6">
-              <button
-                type="button"
-                className="swiper-button-prev-custom cursor-pointer"
-              >
-                <ArrowLeft className="w-6 h-6 text-gray-800" />
-              </button>
-              <button
-                type="button"
-                className="swiper-button-next-custom cursor-pointer"
-              >
-                <ArrowRight className="w-6 h-6 text-gray-800" />
-              </button>
-            </div>
-          </div>
-        </li>
-
-        <li className="relative group cursor-pointer hover:underline text-xs">
-          CONTENT
-          <div className="fixed left-0 right-0 top-[32px] bg-white -z-10 hidden group-hover:block py-6 shadow-md">
-            <div className="grid grid-cols-12">
-              <div className="col-span-10">
-                <Swiper
-                  modules={[Navigation]}
-                  navigation={{
-                    nextEl: ".swiper-button-next-custom",
-                    prevEl: ".swiper-button-prev-custom",
-                  }}
-                  spaceBetween={20}
-                  slidesPerView={1}
-                >
-                  {chunkedContent.map((group, index) => (
-                    <SwiperSlide key={index}>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 px-6">
-                        {group.map((item, i) => (
-                          <Link
-                            href={`/collection/${item.slug}`}
-                            key={i}
-                            className="flex flex-col"
-                          >
-                            <img
-                              src={`${process.env.NEXT_PUBLIC_IMAGE_URL}/${item.thumbnail}`}
-                              alt={`collection-${item.slug}`}
-                              className="w-full h-auto object-cover cursor-pointer"
-                            />
-                            <p className="text-sm mt-2">{item.title}</p>
-                          </Link>
-                        ))}
-                      </div>
-                    </SwiperSlide>
-                  ))}
-                </Swiper>
-
-                {/* navigation */}
-                <div className="flex justify-between gap-6 mt-4 px-6">
-                  <button
-                    type="button"
-                    className="swiper-button-prev-custom cursor-pointer"
+              <div className=" px-6">
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="font-semibold text-sm tracking-wide">
+                    COLLECTIONS
+                  </h2>
+                  <Link
+                    href="/collection"
+                    className="nav-link cursor-pointer text-xs text-zinc-500 w-fit"
                   >
-                    <ArrowLeft className="w-6 h-6 text-gray-800" />
-                  </button>
-                  <button
-                    type="button"
-                    className="swiper-button-next-custom cursor-pointer"
-                  >
-                    <ArrowRight className="w-6 h-6 text-gray-800" />
-                  </button>
+                    View all collections
+                  </Link>
                 </div>
-              </div>
-              {/* content kanan */}
-              <div className="col-span-2">
-                <h1 className="font-bold">Celcius</h1>
-                <Link
-                  href="/collection"
-                  className="hover:text-zinc-400 cursor-pointer text-sm"
-                >
-                  View All Post
-                </Link>
+
+                {collections.length > 0 && (
+                  <>
+                    <Swiper
+                      modules={[Navigation]}
+                      navigation={{
+                        nextEl: ".swiper-collection-next",
+                        prevEl: ".swiper-collection-prev",
+                      }}
+                      spaceBetween={20}
+                      slidesPerView={1}
+                    >
+                      {chunkedCollection.map((group, index) => (
+                        <SwiperSlide key={index}>
+                          <div className="grid grid-cols-5 gap-4">
+                            {group.map((item) => (
+                              <Link
+                                href={`/collection/${item.slug}`}
+                                key={item.id}
+                                className="flex flex-col group/tile"
+                              >
+                                <div className="aspect-3/4 overflow-hidden bg-zinc-100">
+                                  <img
+                                    src={item.thumbnail_url}
+                                    alt={item.name}
+                                    className="w-full h-full object-cover cursor-pointer transition-transform duration-500 ease-out group-hover/tile:scale-105"
+                                  />
+                                </div>
+                                <p className="text-sm mt-2 text-zinc-700 group-hover/tile:text-black transition-colors">
+                                  {item.name}
+                                </p>
+                              </Link>
+                            ))}
+                          </div>
+                        </SwiperSlide>
+                      ))}
+                    </Swiper>
+
+                    {chunkedCollection.length > 1 && (
+                      <div className="flex justify-between gap-6 mt-4">
+                        <button
+                          type="button"
+                          className="swiper-collection-prev cursor-pointer transition-transform hover:-translate-x-0.5"
+                        >
+                          <ArrowLeft className="w-6 h-6 text-gray-800" />
+                        </button>
+                        <button
+                          type="button"
+                          className="swiper-collection-next cursor-pointer transition-transform hover:translate-x-0.5"
+                        >
+                          <ArrowRight className="w-6 h-6 text-gray-800" />
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             </div>
-          </div>
-        </li>
-      </ul>
+          </li>
 
-      {/* navbar tengah logo */}
-      <Link href="/">
-        <Image src={Logo} alt="logo" className="w-auto h-6" />
-      </Link>
+          <li className="relative group cursor-pointer text-xs tracking-wide">
+            <span className="nav-link">LOOKBOOK</span>
+            <div
+              className="fixed left-0 right-0 top-10 bg-white -z-10 py-8 shadow-lg
+              opacity-0 invisible -translate-y-1 pointer-events-none
+              transition-all duration-300 ease-out
+              group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:pointer-events-auto"
+            >
+              <div className=" px-6">
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="font-semibold text-sm tracking-wide">
+                    LOOKBOOK
+                  </h2>
+                  <Link
+                    href="/lookbook"
+                    className="nav-link cursor-pointer text-xs text-zinc-500 w-fit"
+                  >
+                    View all lookbooks
+                  </Link>
+                </div>
 
-      {/* navbar kanan */}
-      <ul className="flex items-center gap-4">
-        <Link href="/location" className="hover:underline">
-          <li className="cursor-pointer text-xs">LOCATION</li>
+                {lookbooks.length > 0 && (
+                  <>
+                    <Swiper
+                      modules={[Navigation]}
+                      navigation={{
+                        nextEl: ".swiper-lookbook-next",
+                        prevEl: ".swiper-lookbook-prev",
+                      }}
+                      spaceBetween={20}
+                      slidesPerView={1}
+                    >
+                      {chunkedLookbooks.map((group, index) => (
+                        <SwiperSlide key={index}>
+                          <div className="grid grid-cols-5 gap-4">
+                            {group.map((item) => (
+                              <Link
+                                href={`/lookbook/${item.slug}`}
+                                key={item.id}
+                                className="flex flex-col group/tile"
+                              >
+                                <div className="aspect-3/4 overflow-hidden bg-zinc-100">
+                                  <img
+                                    src={item.thumbnail_url}
+                                    alt={item.title}
+                                    className="w-full h-full object-cover cursor-pointer transition-transform duration-500 ease-out group-hover/tile:scale-105"
+                                  />
+                                </div>
+                                <p className="text-sm mt-2 text-zinc-700 group-hover/tile:text-black transition-colors">
+                                  {item.title}
+                                </p>
+                              </Link>
+                            ))}
+                          </div>
+                        </SwiperSlide>
+                      ))}
+                    </Swiper>
+
+                    {chunkedLookbooks.length > 1 && (
+                      <div className="flex justify-between gap-6 mt-4">
+                        <button
+                          type="button"
+                          className="swiper-lookbook-prev cursor-pointer transition-transform hover:-translate-x-0.5"
+                        >
+                          <ArrowLeft className="w-6 h-6 text-gray-800" />
+                        </button>
+                        <button
+                          type="button"
+                          className="swiper-lookbook-next cursor-pointer transition-transform hover:translate-x-0.5"
+                        >
+                          <ArrowRight className="w-6 h-6 text-gray-800" />
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
+          </li>
+        </ul>
+
+        {/* navbar tengah logo */}
+        <Link href="/">
+          <Image src={Logo} alt="logo" className="w-auto h-6" />
         </Link>
-        <li
-          className="cursor-pointer text-xs hover:underline"
-          onClick={() => setIsOpenSearch(true)}
-        >
-          SEARCH
-        </li>
-        <Link
-          href={token ? "/dashboard" : "/login"}
-          className="hover:underline"
-        >
-          {token ? (
-            <li className="cursor-pointer text-xs">ACCOUNT</li>
-          ) : (
-            <li className="cursor-pointer text-xs">LOGIN</li>
-          )}
-        </Link>
-        <li
-          className="cursor-pointer text-xs hover:underline"
-          onClick={() => setIsOpenCarts(true)}
-        >
-          CART({cartItems.length || 0})
-        </li>
-      </ul>
 
-      {(isOpenSearch || isOpenCarts) && (
-        <div
-          className="fixed inset-0 bg-black/30 z-20"
-          onClick={() => {
-            setIsOpenSearch(false);
-            setIsOpenCarts(false);
-          }}
-        />
-      )}
+        {/* navbar kanan */}
+        <nav className="flex items-center gap-5 text-xs tracking-wide">
+          <Link href="/location" className="nav-link cursor-pointer">
+            LOCATION
+          </Link>
+          <button
+            type="button"
+            className="nav-link cursor-pointer"
+            onClick={() => setIsOpenSearch(true)}
+          >
+            SEARCH
+          </button>
+          <Link
+            href={token ? "/dashboard" : "/login"}
+            className="nav-link cursor-pointer"
+          >
+            {token ? "ACCOUNT" : "LOGIN"}
+          </Link>
+          <button
+            type="button"
+            className="nav-link cursor-pointer flex items-center gap-1"
+            onClick={() => setIsOpenCarts(true)}
+          >
+            CART
+            <span className="inline-flex min-w-4 justify-center text-[10px] text-zinc-500">
+              ({cartItems.length || 0})
+            </span>
+          </button>
+        </nav>
+      </div>
 
-      {/* search modal */}
+      <div
+        className={`fixed inset-0 bg-black/30 z-20 transition-opacity duration-300 ${
+          isOpenSearch || isOpenCarts
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
+        }`}
+        onClick={() => {
+          setIsOpenSearch(false);
+          setIsOpenCarts(false);
+        }}
+      />
+
       <SearchBar isOpen={isOpenSearch} onClose={() => setIsOpenSearch(false)} />
-      {/* cart modal */}
       <CartBar isOpen={isOpenCarts} onClose={() => setIsOpenCarts(false)} />
     </div>
   );

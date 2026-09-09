@@ -15,14 +15,10 @@ import {
 import cartReducer from "./cartSlice";
 import authReducer from "./authSlice";
 
-// Konfigurasi redux-persist
-const persistConfig = {
-  key: "root",
-  storage,
-};
-
-const persistedCartReducer = persistReducer(persistConfig, cartReducer);
-const persistedAuthReducer = persistReducer(persistConfig, authReducer);
+// Setiap slice butuh persist key unik - berbagi key yang sama membuat
+// keduanya menulis ke storage entry yang sama dan saling menimpa.
+const persistedCartReducer = persistReducer({ key: "cart", storage }, cartReducer);
+const persistedAuthReducer = persistReducer({ key: "auth", storage }, authReducer);
 
 // Setup store
 export const store = configureStore({

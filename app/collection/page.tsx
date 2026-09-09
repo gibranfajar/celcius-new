@@ -2,27 +2,23 @@
 
 import { useEffect, useState } from "react";
 import CollectionList from "@/components/CollectionList";
-import { ClipLoader } from "react-spinners";
+import { getCollections } from "@/lib/api";
+import { getErrorMessage } from "@/lib/api/client";
+import { Collection as CollectionType } from "@/lib/api/types";
 
 export default function Collection() {
-  const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-  const [dataCollection, setDataCollection] = useState<any[]>([]);
+  const [dataCollection, setDataCollection] = useState<CollectionType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCollections = async () => {
       try {
-        const res = await fetch(`${BASE_URL}collection/list`, {
-          cache: "no-store", // biar data terbaru terus
-        });
-        if (!res.ok) throw new Error("Failed to fetch collections");
-
-        const data = await res.json();
-        setDataCollection(data);
-      } catch (err: any) {
+        const res = await getCollections();
+        setDataCollection(res.data);
+      } catch (err) {
         console.error("Error fetching collections:", err);
-        setError(err.message);
+        setError(getErrorMessage(err));
       } finally {
         setLoading(false);
       }
@@ -37,22 +33,13 @@ export default function Collection() {
         <h1 className="text-xl">Collections</h1>
       </div>
 
-      {/* Kondisi Loading */}
-      {loading && (
-        <div className="min-h-screen flex items-center justify-center text-gray-500">
-          <ClipLoader />
-        </div>
-      )}
-
-      {/* Kondisi Error */}
       {error && (
         <div className="text-center text-red-500">
           <p>⚠️ {error}</p>
         </div>
       )}
 
-      {/* Data */}
-      {!loading && !error && <CollectionList data={dataCollection} />}
+      {!error && <CollectionList data={dataCollection} loading={loading} />}
     </div>
   );
 }
