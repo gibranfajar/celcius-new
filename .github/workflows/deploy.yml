@@ -28,9 +28,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Type check
-        run: npx tsc --noEmit
-
+      # `next build` already runs the same type-check as part of its build
+      # step (and self-generates the gitignored next-env.d.ts that Next's
+      # own image-import types live in). Running `tsc --noEmit` as a
+      # separate, earlier step fails on a fresh checkout: next-env.d.ts
+      # doesn't exist yet, so every `next/image` static import
+      # (e.g. `@/public/images/logo.png`) errors as an unresolvable module.
       - name: Build
         run: npm run build
         env:
