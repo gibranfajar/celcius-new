@@ -1,0 +1,44 @@
+services:
+    web:
+        build:
+            context: .
+            dockerfile: Dockerfile
+            args:
+                NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+                NEXT_PUBLIC_MIDTRANS_CLIENT_KEY: ${NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
+                NEXT_PUBLIC_MIDTRANS_SNAP_URL: ${NEXT_PUBLIC_MIDTRANS_SNAP_URL}
+        image: celcius-storefront:latest
+        container_name: web-celcius
+        restart: unless-stopped
+        env_file:
+            - .env
+        networks:
+            - celcius-storefront-net
+            - traefik-network
+        labels:
+            - 'traefik.enable=true'
+
+            # Network Traefik uses to reach this container.
+            - 'traefik.docker.network=traefik-network'
+
+            # Router
+            - 'traefik.http.routers.celcius-storefront.rule=Host(`${FRONTEND_DOMAIN}`)'
+            - 'traefik.http.routers.celcius-storefront.entrypoints=websecure'
+            - 'traefik.http.routers.celcius-storefront.tls=true'
+            - 'traefik.http.routers.celcius-storefront.tls.certresolver=letsencrypt'
+
+            # Service
+            - 'traefik.http.services.celcius-storefront.loadbalancer.server.port=3000'
+
+            # Redirect HTTP -> HTTPS
+            - 'traefik.http.routers.celcius-storefront-http.rule=Host(`${FRONTEND_DOMAIN}`)'
+            - 'traefik.http.routers.celcius-storefront-http.entrypoints=web'
+            - 'traefik.http.routers.celcius-storefront-http.middlewares=celcius-storefront-redirect-https'
+
+            - 'traefik.http.middlewares.celcius-storefront-redirect-https.redirectscheme.scheme=https'
+
+networks:
+    celcius-storefront-net:
+        driver: bridge
+    traefik-network:
+        external: true
