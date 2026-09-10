@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { AnimatePresence } from "framer-motion";
 import ModalShippingAddress, {
   ShippingAddressForm,
 } from "@/components/ModalShippingAddress";
@@ -181,23 +182,28 @@ export default function CheckoutPage() {
         return;
       }
 
+      // The order is already persisted on the backend at this point, so the
+      // cart must be cleared now - not inside the Snap callbacks below, which
+      // never fire if the user closes the tab/browser before finishing (or
+      // dismissing) the payment popup, leaving stale items in the cart.
+      dispatch(clearCart());
+
       if (typeof window === "undefined" || !window.snap) {
         toast.error(
-          "Payment service is not ready yet. Please wait a moment and try again.",
+          "Payment service is not ready yet. You can finish payment anytime from your orders.",
         );
+        router.push("/dashboard");
         return;
       }
 
       window.snap.pay(response.snap_token, {
         onSuccess: () => {
           toast.success("Payment successful 🎉");
-          dispatch(clearCart());
           router.push("/dashboard");
         },
         onPending: () => {
           toast("Waiting for payment ⏳", { icon: "⏳" });
-          dispatch(clearCart());
-          router.push("/");
+          router.push("/dashboard");
         },
         onError: () => {
           toast.error("Payment failed ❌");
@@ -338,16 +344,19 @@ export default function CheckoutPage() {
             </button>
           </div>
 
-          {showModal && (
-            <ModalShippingAddress
-              setShowModal={setShowModal}
-              onSave={(form) => {
-                setManualAddress(form);
-                setSelectedAddressId(null);
-              }}
-              data={manualAddress}
-            />
-          )}
+          <AnimatePresence>
+            {showModal && (
+              <ModalShippingAddress
+                key="shipping-address-modal"
+                setShowModal={setShowModal}
+                onSave={(form) => {
+                  setManualAddress(form);
+                  setSelectedAddressId(null);
+                }}
+                data={manualAddress}
+              />
+            )}
+          </AnimatePresence>
 
           <hr />
 

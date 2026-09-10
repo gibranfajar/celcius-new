@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
+import MobileSheetModal from "@/components/MobileSheetModal";
 import { getProvinces, getCities, getDistricts, getSubdistricts } from "@/lib/api";
 import { ShippingArea } from "@/lib/api/types";
 
@@ -98,8 +99,10 @@ export default function ModalShippingAddress({
     form.address;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 sm:p-4">
-      <div className="bg-white w-full sm:max-w-125 max-h-[92vh] sm:max-h-[90vh] overflow-y-auto shadow-lg p-5 sm:p-6 relative">
+    <MobileSheetModal
+      onClose={() => setShowModal(false)}
+      className="sm:max-w-125 max-h-[92vh] sm:max-h-[90vh] overflow-y-auto p-5 sm:p-6"
+    >
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold">Shipping Address</h2>
@@ -289,7 +292,6 @@ export default function ModalShippingAddress({
         >
           SAVE ADDRESS
         </button>
-      </div>
-    </div>
+    </MobileSheetModal>
   );
 }

@@ -9,7 +9,11 @@ import { formatMiniText } from "@/lib/formatMiniText";
 import { getProducts, getBanners, getLookbooks } from "@/lib/api";
 import { Banner, Lookbook, Product } from "@/lib/api/types";
 import SkeletonImage from "@/components/SkeletonImage";
-import { getDeviceType } from "@/lib/getDeviceType";
+import {
+  BANNER_DISPLAY_TYPES,
+  bannersForDisplay,
+  getBannerDisplayClass,
+} from "@/lib/bannerDisplayClass";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
@@ -30,7 +34,7 @@ export default function Home() {
       try {
         const [productsRes, banners, lookbooksRes] = await Promise.all([
           getProducts(),
-          getBanners({ page: "men", display: getDeviceType() }),
+          getBanners({ page: "men" }),
           getLookbooks(),
         ]);
 
@@ -90,6 +94,18 @@ export default function Home() {
     );
   }
 
+  const renderBannerByDevice = (banners: Banner[]) =>
+    BANNER_DISPLAY_TYPES.map((display) => {
+      const items = bannersForDisplay(banners, display);
+      if (items.length === 0) return null;
+
+      return (
+        <div key={display} className={getBannerDisplayClass(display)}>
+          {renderBannerSlider(items)}
+        </div>
+      );
+    });
+
   const renderBannerSlider = (banners: Banner[]) => (
     <Swiper modules={[Autoplay]} autoplay={{ delay: 4000 }} loop>
       {banners.map((item) => (
@@ -138,7 +154,7 @@ export default function Home() {
     <>
       {/* Banner Atas */}
       {bannerTop.length > 0 && (
-        <div className="space-y-2">{renderBannerSlider(bannerTop)}</div>
+        <div className="space-y-2">{renderBannerByDevice(bannerTop)}</div>
       )}
 
       {/* Grid Lookbook */}
@@ -177,7 +193,7 @@ export default function Home() {
 
       {/* Banner Bawah */}
       {bannerBottom.length > 0 && (
-        <div className="space-y-2">{renderBannerSlider(bannerBottom)}</div>
+        <div className="space-y-2">{renderBannerByDevice(bannerBottom)}</div>
       )}
 
       {/* product grid */}

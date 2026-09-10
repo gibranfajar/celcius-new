@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AnimatePresence } from "framer-motion";
 import { toast } from "react-hot-toast";
 import { X } from "lucide-react";
+import MobileSheetModal from "@/components/MobileSheetModal";
 import {
   updateProfile,
   listAddresses,
@@ -190,6 +192,11 @@ export default function Profile({
     };
   }, [showAddressForm]);
 
+  const closeAddressForm = () => {
+    setShowAddressForm(false);
+    setEditingAddressId(null);
+  };
+
   const handleDeleteAddress = async (id: number) => {
     try {
       await deleteAddress(id);
@@ -326,22 +333,21 @@ export default function Profile({
           ))}
         </div>
 
-        {showAddressForm && (
-          <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center">
-            <form
-              onSubmit={handleSubmitAddress}
-              className="bg-white w-full sm:max-w-md max-h-[92vh] sm:max-h-[90vh] overflow-y-auto shadow-lg relative space-y-3 text-sm"
+        <AnimatePresence>
+          {showAddressForm && (
+            <MobileSheetModal
+              key="address-form"
+              onClose={closeAddressForm}
+              className="sm:max-w-md max-h-[92vh] sm:max-h-[90vh] overflow-y-auto space-y-3 text-sm"
             >
+              <form onSubmit={handleSubmitAddress} className="space-y-3">
               <div className="sticky top-0 bg-white flex items-center justify-between px-4 md:px-5 py-3.5 border-b border-zinc-100 z-10">
                 <h2 className="text-sm font-semibold">
                   {editingAddressId ? "Edit Address" : "Add Address"}
                 </h2>
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowAddressForm(false);
-                    setEditingAddressId(null);
-                  }}
+                  onClick={closeAddressForm}
                   aria-label="Close"
                   className="text-zinc-400 hover:text-black transition-colors cursor-pointer"
                 >
@@ -526,19 +532,17 @@ export default function Profile({
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setShowAddressForm(false);
-                  setEditingAddressId(null);
-                }}
+                onClick={closeAddressForm}
                 className="border border-zinc-400 py-2 px-4 cursor-pointer"
               >
                 CANCEL
               </button>
             </div>
               </div>
-            </form>
-          </div>
-        )}
+              </form>
+            </MobileSheetModal>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

@@ -7,7 +7,11 @@ import { Banner, Product } from "@/lib/api/types";
 import Image from "next/image";
 import ProductList from "@/components/ProductList";
 import SkeletonImage from "@/components/SkeletonImage";
-import { getDeviceType } from "@/lib/getDeviceType";
+import {
+  BANNER_DISPLAY_TYPES,
+  bannersForDisplay,
+  getBannerDisplayClass,
+} from "@/lib/bannerDisplayClass";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
@@ -27,7 +31,7 @@ export default function WomenHome() {
       try {
         const [productsRes, banners] = await Promise.all([
           getProducts(),
-          getBanners({ page: "women", display: getDeviceType() }),
+          getBanners({ page: "women" }),
         ]);
 
         setProducts(productsRes.data);
@@ -42,6 +46,18 @@ export default function WomenHome() {
 
     load();
   }, []);
+
+  const renderBannerByDevice = (banners: Banner[]) =>
+    BANNER_DISPLAY_TYPES.map((display) => {
+      const items = bannersForDisplay(banners, display);
+      if (items.length === 0) return null;
+
+      return (
+        <div key={display} className={getBannerDisplayClass(display)}>
+          {renderBannerSlider(items)}
+        </div>
+      );
+    });
 
   const renderBannerSlider = (banners: Banner[]) => (
     <Swiper modules={[Autoplay]} autoplay={{ delay: 4000 }} loop>
@@ -86,9 +102,9 @@ export default function WomenHome() {
         <SkeletonImage className="w-full aspect-4/5 md:aspect-5/1 animate-pulse" />
       ) : (
         <>
-          {bannerTop.length > 0 && <div className="mb-1">{renderBannerSlider(bannerTop)}</div>}
+          {bannerTop.length > 0 && <div className="mb-1">{renderBannerByDevice(bannerTop)}</div>}
           {bannerBottom.length > 0 && (
-            <div className="mt-1">{renderBannerSlider(bannerBottom)}</div>
+            <div className="mt-1">{renderBannerByDevice(bannerBottom)}</div>
           )}
         </>
       )}

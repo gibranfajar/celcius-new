@@ -4,26 +4,66 @@ import formatProductName from "@/lib/formatProductName";
 import { formatToIdr } from "@/lib/formatToIdr";
 import getStatusStyle from "@/lib/getStatusStyle";
 import { useEffect, useState } from "react";
+import { AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
-import { X, Truck, CreditCard, PackageOpen, History } from "lucide-react";
+import MobileSheetModal from "@/components/MobileSheetModal";
+import {
+  X,
+  Truck,
+  CreditCard,
+  PackageOpen,
+  History,
+  CheckCircle2,
+  XCircle,
+  RotateCcw,
+  Clock,
+  Circle,
+  LucideIcon,
+} from "lucide-react";
 import { confirmOrder, payOrder } from "@/lib/api";
 import { getErrorMessage } from "@/lib/api/client";
 import { Order as OrderType } from "@/lib/api/types";
 
-async function payForOrder(orderId: number): Promise<void> {
+// `onSettled` lets callers refresh their order list once a payment actually
+// goes through - without it the UI kept showing "unpaid"/"PAY NOW" after a
+// successful payment since nothing ever refetched the order.
+async function payForOrder(
+  orderId: number,
+  onSettled?: () => void,
+): Promise<void> {
   const { snap_token } = await payOrder(orderId);
 
   if (typeof window === "undefined" || !window.snap) {
-    toast.error("Payment service is not ready yet. Please wait a moment and try again.");
+    toast.error(
+      "Payment service is not ready yet. Please wait a moment and try again.",
+    );
     return;
   }
 
   window.snap.pay(snap_token, {
-    onSuccess: () => toast.success("Payment successful 🎉"),
-    onPending: () => toast("Waiting for payment ⏳", { icon: "⏳" }),
+    onSuccess: () => {
+      toast.success("Payment successful 🎉");
+      onSettled?.();
+    },
+    onPending: () => {
+      toast("Waiting for payment ⏳", { icon: "⏳" });
+      onSettled?.();
+    },
     onError: () => toast.error("Payment failed ❌"),
     onClose: () => toast("Payment popup closed", { icon: "⚠️" }),
   });
+}
+
+function getHistoryIcon(status: string): LucideIcon {
+  const key = status.toLowerCase();
+  if (key.includes("cancel")) return XCircle;
+  if (key.includes("refund")) return RotateCcw;
+  if (key.includes("ship") || key.includes("deliver")) return Truck;
+  if (key.includes("complete")) return CheckCircle2;
+  if (key.includes("process")) return PackageOpen;
+  if (key.includes("paid")) return CreditCard;
+  if (key.includes("pending") || key.includes("unpaid")) return Clock;
+  return Circle;
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -73,7 +113,7 @@ function OrderDetailModal({
   const handlePay = async () => {
     setPaying(true);
     try {
-      await payForOrder(order.order_id);
+      await payForOrder(order.order_id, onConfirmed);
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -81,13 +121,22 @@ function OrderDetailModal({
     }
   };
 
+  // The API already returns histories oldest-first (`Order::histories()` is
+  // `oldest()`), which is exactly the order we want left-to-right: oldest on
+  // the left, current status last/rightmost.
+  const timeline = order.histories;
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-end sm:items-center justify-center">
-      <div className="bg-white w-full sm:max-w-md max-h-[92vh] sm:max-h-[90vh] overflow-y-auto shadow-lg relative">
-        <div className="sticky top-0 bg-white flex items-center justify-between px-4 md:px-5 py-3.5 border-b border-zinc-100 z-10">
+    <MobileSheetModal
+      onClose={onClose}
+      className="sm:max-w-md max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden"
+    >
+        <div className="flex items-center justify-between px-4 md:px-5 py-3.5 border-b border-zinc-100 shrink-0">
           <div>
             <h2 className="text-sm font-semibold">{order.order_number}</h2>
-            <p className="text-[11px] text-zinc-400">{formatDate(order.created_at)}</p>
+            <p className="text-[11px] text-zinc-400">
+              {formatDate(order.created_at)}
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -98,7 +147,7 @@ function OrderDetailModal({
           </button>
         </div>
 
-        <div className="p-4 md:p-5 space-y-5">
+        <div className="p-4 md:p-5 space-y-5 overflow-y-auto flex-1 min-h-0">
           <StatusBadge status={order.status} />
 
           {/* SHIPPING INFO */}
@@ -107,27 +156,35 @@ function OrderDetailModal({
               <Truck size={13} /> Shipping Information
             </h3>
             <p>
-              <span className="font-medium">Name:</span> {order.shipping_receiver_name}
+              <span className="font-medium">Name:</span>{" "}
+              {order.shipping_receiver_name}
             </p>
             <p>
               <span className="font-medium">Phone:</span> {order.shipping_phone}
             </p>
             <p>
-              <span className="font-medium">Address:</span> {order.shipping_address}
+              <span className="font-medium">Address:</span>{" "}
+              {order.shipping_address}
             </p>
             <p>
               <span className="font-medium">Region:</span>{" "}
-              {[order.shipping_district, order.shipping_city, order.shipping_province]
+              {[
+                order.shipping_district,
+                order.shipping_city,
+                order.shipping_province,
+              ]
                 .filter(Boolean)
                 .join(", ") || "-"}
             </p>
             <p>
-              <span className="font-medium">Postal Code:</span> {order.shipping_postal_code}
+              <span className="font-medium">Postal Code:</span>{" "}
+              {order.shipping_postal_code}
             </p>
             {order.shipment && (
               <>
                 <p>
-                  <span className="font-medium">Courier:</span> {order.shipment.courier_code} -{" "}
+                  <span className="font-medium">Courier:</span>{" "}
+                  {order.shipment.courier_code} -{" "}
                   {order.shipment.courier_service}
                 </p>
                 {order.shipment.waybill_number && (
@@ -147,10 +204,13 @@ function OrderDetailModal({
                 key={index}
                 className="border border-zinc-200 p-3 text-xs flex justify-between gap-3"
               >
-                <div className="space-y-0.5">
-                  <p className="font-medium text-sm">{formatProductName(item.product_name)}</p>
-                  <p className="text-zinc-500">
-                    {formatProductName(item.variant_color_name)} · {item.size_name} × {item.quantity}
+                <div className="space-y-0.5 min-w-0">
+                  <p className="font-medium text-sm break-words">
+                    {formatProductName(item.product_name)}
+                  </p>
+                  <p className="text-zinc-500 break-words">
+                    {formatProductName(item.variant_color_name)} ·{" "}
+                    {item.size_name} × {item.quantity}
                   </p>
                 </div>
 
@@ -168,10 +228,12 @@ function OrderDetailModal({
                 <CreditCard size={13} /> Payment Details
               </h3>
               <p>
-                <span className="font-medium">Method:</span> {order.payment.payment_method}
+                <span className="font-medium">Method:</span>{" "}
+                {order.payment.payment_method}
               </p>
               <p>
-                <span className="font-medium">Status:</span> {order.payment.status}
+                <span className="font-medium">Status:</span>{" "}
+                {order.payment.status}
               </p>
               {order.payment.paid_at && (
                 <p>
@@ -183,41 +245,51 @@ function OrderDetailModal({
           )}
 
           {/* ORDER HISTORY */}
-          {order.histories.length > 0 && (
-            <div className="text-xs space-y-1">
-              <h3 className="font-semibold mb-2 flex items-center gap-1.5">
+          {timeline.length > 0 && (
+            <div className="text-xs space-y-2">
+              <h3 className="font-semibold flex items-center gap-1.5">
                 <History size={13} /> Order History
               </h3>
-              <div className="space-y-3">
-                {order.histories.map((history, index) => (
-                  <div key={index} className="flex gap-2.5">
-                    <div className="flex flex-col items-center pt-0.5">
-                      <span
-                        className={`size-1.5 rounded-full ${
-                          index === 0 ? "bg-black" : "bg-zinc-300"
-                        }`}
-                      />
-                      {index !== order.histories.length - 1 && (
-                        <span className="w-px flex-1 bg-zinc-200 mt-1" />
-                      )}
-                    </div>
-                    <div className="pb-3">
-                      <p
-                        className={`font-medium capitalize ${
-                          index === 0 ? "text-black" : "text-zinc-500"
-                        }`}
-                      >
-                        {history.status.replace(/_/g, " ")}
-                      </p>
-                      {history.description && (
-                        <p className="text-zinc-500 mt-0.5">{history.description}</p>
-                      )}
-                      <p className="text-zinc-400 mt-0.5">
-                        {formatDateTime(history.created_at)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-x-auto -mx-4 px-4 md:-mx-5 md:px-5">
+                <div className="flex items-start w-max min-w-full">
+                  {timeline.map((history, index) => {
+                    const isCurrent = index === timeline.length - 1;
+                    const Icon = getHistoryIcon(history.status);
+
+                    return (
+                      <div key={index} className="flex items-center">
+                        <div
+                          className="flex flex-col items-center gap-1.5 w-20 text-center"
+                          title={history.description || undefined}
+                        >
+                          <span
+                            className={`flex items-center justify-center size-7 rounded-full border shrink-0 ${
+                              isCurrent
+                                ? "bg-black border-black text-white"
+                                : "bg-white border-zinc-300 text-zinc-400"
+                            }`}
+                          >
+                            <Icon size={13} />
+                          </span>
+                          <p
+                            className={`font-medium capitalize leading-tight ${
+                              isCurrent ? "text-black" : "text-zinc-500"
+                            }`}
+                          >
+                            {history.status.replace(/_/g, " ")}
+                          </p>
+                          <p className="text-[10px] text-zinc-400 leading-tight">
+                            {formatDateTime(history.created_at)}
+                          </p>
+                        </div>
+
+                        {index !== timeline.length - 1 && (
+                          <span className="h-px w-6 md:w-8 bg-zinc-200 mt-3.5 shrink-0" />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}
@@ -244,29 +316,32 @@ function OrderDetailModal({
               <span>{formatToIdr(order.grand_total)}</span>
             </div>
           </div>
-
-          {order.status === "unpaid" && (
-            <button
-              onClick={handlePay}
-              disabled={paying}
-              className="w-full bg-black text-white py-3 text-sm font-medium tracking-wide hover:bg-zinc-800 cursor-pointer disabled:opacity-50"
-            >
-              {paying ? "Loading..." : "Pay Now"}
-            </button>
-          )}
-
-          {order.status === "shipped" && (
-            <button
-              onClick={handleConfirm}
-              disabled={confirming}
-              className="w-full bg-black text-white py-3 text-sm font-medium tracking-wide hover:bg-zinc-800 cursor-pointer disabled:opacity-50"
-            >
-              {confirming ? "Confirming..." : "Confirm Received"}
-            </button>
-          )}
         </div>
-      </div>
-    </div>
+
+        {(order.status === "unpaid" || order.status === "shipped") && (
+          <div className="border-t border-zinc-100 p-4 md:px-5 shrink-0 bg-white">
+            {order.status === "unpaid" && (
+              <button
+                onClick={handlePay}
+                disabled={paying}
+                className="w-full bg-black text-white py-3 text-sm font-medium tracking-wide hover:bg-zinc-800 cursor-pointer disabled:opacity-50"
+              >
+                {paying ? "Loading..." : "Pay Now"}
+              </button>
+            )}
+
+            {order.status === "shipped" && (
+              <button
+                onClick={handleConfirm}
+                disabled={confirming}
+                className="w-full bg-black text-white py-3 text-sm font-medium tracking-wide hover:bg-zinc-800 cursor-pointer disabled:opacity-50"
+              >
+                {confirming ? "Confirming..." : "Confirm Received"}
+              </button>
+            )}
+          </div>
+        )}
+    </MobileSheetModal>
   );
 }
 
@@ -283,7 +358,7 @@ export default function Order({
   const handleQuickPay = async (orderId: number) => {
     setPayingId(orderId);
     try {
-      await payForOrder(orderId);
+      await payForOrder(orderId, onRefresh);
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -313,7 +388,9 @@ export default function Order({
                 <p className="font-medium">{order.order_number}</p>
                 <StatusBadge status={order.status} />
               </div>
-              <p className="text-zinc-500 text-xs">{formatDate(order.created_at)}</p>
+              <p className="text-zinc-500 text-xs">
+                {formatDate(order.created_at)}
+              </p>
               <p className="font-semibold">{formatToIdr(order.grand_total)}</p>
             </div>
 
@@ -339,13 +416,16 @@ export default function Order({
         ))}
       </div>
 
-      {selectedOrder && (
-        <OrderDetailModal
-          order={selectedOrder}
-          onClose={() => setSelectedOrder(null)}
-          onConfirmed={onRefresh}
-        />
-      )}
+      <AnimatePresence>
+        {selectedOrder && (
+          <OrderDetailModal
+            key={selectedOrder.order_id}
+            order={selectedOrder}
+            onClose={() => setSelectedOrder(null)}
+            onConfirmed={onRefresh}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
