@@ -7,7 +7,7 @@ import { ChevronDown, Search, X } from "lucide-react";
 import Logo from "@/public/images/logo.png";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
-import { getCategories, getCollections, getLookbooks } from "@/lib/api";
+import { fetchAllPages, getCategories, getCollections, getLookbooks } from "@/lib/api";
 import { Category, Collection, Lookbook } from "@/lib/api/types";
 
 type Props = {
@@ -42,12 +42,12 @@ export default function MobileSidebar({ isOpen, onClose, onOpenSearch }: Props) 
       .then(setCategories)
       .catch((error) => console.error("Error fetching categories:", error));
 
-    getCollections()
-      .then((res) => setCollections(res.data))
+    fetchAllPages(getCollections)
+      .then(setCollections)
       .catch((error) => console.error("Error fetching collections:", error));
 
-    getLookbooks()
-      .then((res) => setLookbooks(res.data))
+    fetchAllPages(getLookbooks)
+      .then(setLookbooks)
       .catch((error) => console.error("Error fetching lookbooks:", error));
   }, []);
 

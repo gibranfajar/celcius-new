@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import MobileSheetModal from "@/components/MobileSheetModal";
+import { Skeleton } from "@/components/SkeletonImage";
 import {
   X,
   Truck,
@@ -20,9 +21,11 @@ import {
   Circle,
   LucideIcon,
 } from "lucide-react";
-import { confirmOrder, payOrder } from "@/lib/api";
+import { confirmOrder, listOrders, payOrder } from "@/lib/api";
 import { getErrorMessage } from "@/lib/api/client";
 import { Order as OrderType } from "@/lib/api/types";
+import { useInfiniteList } from "@/lib/hooks/useInfiniteList";
+import InfiniteScrollSentinel from "@/components/InfiniteScrollSentinel";
 
 // `onSettled` lets callers refresh their order list once a payment actually
 // goes through - without it the UI kept showing "unpaid"/"PAY NOW" after a
@@ -345,26 +348,42 @@ function OrderDetailModal({
   );
 }
 
-export default function Order({
-  orders,
-  onRefresh,
-}: {
-  orders: OrderType[];
-  onRefresh: () => void;
-}) {
+export default function Order() {
+  const {
+    items: orders,
+    loading,
+    loadingMore,
+    loadMoreError,
+    sentinelRef,
+    refetch,
+  } = useInfiniteList<OrderType>((page) => listOrders(page), []);
+
   const [selectedOrder, setSelectedOrder] = useState<OrderType | null>(null);
   const [payingId, setPayingId] = useState<number | null>(null);
 
   const handleQuickPay = async (orderId: number) => {
     setPayingId(orderId);
     try {
-      await payForOrder(orderId, onRefresh);
+      await payForOrder(orderId, refetch);
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
       setPayingId(null);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-xl font-semibold">My Orders</h1>
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-24 border border-zinc-200" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -416,13 +435,21 @@ export default function Order({
         ))}
       </div>
 
+      {orders.length > 0 && (
+        <InfiniteScrollSentinel
+          sentinelRef={sentinelRef}
+          loadingMore={loadingMore}
+          loadMoreError={loadMoreError}
+        />
+      )}
+
       <AnimatePresence>
         {selectedOrder && (
           <OrderDetailModal
             key={selectedOrder.order_id}
             order={selectedOrder}
             onClose={() => setSelectedOrder(null)}
-            onConfirmed={onRefresh}
+            onConfirmed={refetch}
           />
         )}
       </AnimatePresence>

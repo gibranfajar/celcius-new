@@ -8,7 +8,7 @@ import Image from "next/image";
 import { getCollection } from "@/lib/api";
 import { getErrorMessage } from "@/lib/api/client";
 import { Collection } from "@/lib/api/types";
-import SkeletonImage from "@/components/SkeletonImage";
+import SkeletonImage, { Skeleton } from "@/components/SkeletonImage";
 
 export default function CollectionDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -36,9 +36,9 @@ export default function CollectionDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen px-4 md:px-6 py-8 seccond-font animate-pulse">
+      <div className="min-h-screen px-4 md:px-6 py-8 seccond-font">
         <div className="max-w-2xl mx-auto mb-8 text-center">
-          <div className="h-7 w-2/3 bg-gray-200 mx-auto" />
+          <Skeleton className="h-7 w-2/3 mx-auto" />
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-6xl mx-auto">
           {Array.from({ length: 8 }).map((_, i) => (

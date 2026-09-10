@@ -9,3 +9,7 @@ export default function SkeletonImage({
     </div>
   );
 }
+
+// Same shimmer treatment as SkeletonImage, under a name that reads right for
+// non-image placeholders (text lines, avatar circles, buttons, etc).
+export const Skeleton = SkeletonImage;

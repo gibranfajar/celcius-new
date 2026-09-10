@@ -56,7 +56,7 @@ export default function Cart() {
   }
 
   return (
-    <div className="p-4 md:p-6 seccond-font max-w-6xl mx-auto">
+    <div className="p-4 md:p-6 seccond-font mx-auto">
       <h1 className="text-2xl mb-6">Cart</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -91,7 +91,9 @@ export default function Cart() {
                     </p>
                     <p>{item.weight} gr</p>
                     <p className={item.stock <= 0 ? "text-red-600" : ""}>
-                      {item.stock > 0 ? `${item.stock} in stock` : "Out of stock"}
+                      {item.stock > 0
+                        ? `${item.stock} in stock`
+                        : "Out of stock"}
                     </p>
                   </div>
                 </div>
@@ -99,7 +101,9 @@ export default function Cart() {
                 <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-between gap-3">
                   <button
                     onClick={() =>
-                      dispatch(removeFromCart({ productSizeId: item.productSizeId }))
+                      dispatch(
+                        removeFromCart({ productSizeId: item.productSizeId }),
+                      )
                     }
                     aria-label="Remove item"
                     className="text-gray-400 hover:text-red-500 cursor-pointer transition-colors"
@@ -110,7 +114,11 @@ export default function Cart() {
                   <div className="flex items-center border border-gray-300">
                     <button
                       onClick={() =>
-                        dispatch(decrementQuantity({ productSizeId: item.productSizeId }))
+                        dispatch(
+                          decrementQuantity({
+                            productSizeId: item.productSizeId,
+                          }),
+                        )
                       }
                       disabled={item.quantity <= 1}
                       className="px-2.5 py-1 text-lg cursor-pointer disabled:text-gray-300 disabled:cursor-not-allowed"
@@ -120,7 +128,11 @@ export default function Cart() {
                     <span className="px-3 text-sm">{item.quantity}</span>
                     <button
                       onClick={() =>
-                        dispatch(incrementQuantity({ productSizeId: item.productSizeId }))
+                        dispatch(
+                          incrementQuantity({
+                            productSizeId: item.productSizeId,
+                          }),
+                        )
                       }
                       disabled={item.quantity >= item.stock}
                       className="px-2.5 py-1 text-lg cursor-pointer disabled:text-gray-300 disabled:cursor-not-allowed"

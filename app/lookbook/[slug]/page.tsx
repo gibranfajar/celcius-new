@@ -8,7 +8,7 @@ import Image from "next/image";
 import { getLookbook } from "@/lib/api";
 import { getErrorMessage } from "@/lib/api/client";
 import { Lookbook } from "@/lib/api/types";
-import SkeletonImage from "@/components/SkeletonImage";
+import SkeletonImage, { Skeleton } from "@/components/SkeletonImage";
 
 export default function LookbookDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -35,12 +35,12 @@ export default function LookbookDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen px-4 md:px-6 py-8 seccond-font animate-pulse">
+      <div className="min-h-screen px-4 md:px-6 py-8 seccond-font">
         <div className="max-w-2xl mx-auto mb-8 text-center space-y-3">
-          <div className="h-3 w-16 bg-gray-200 mx-auto" />
-          <div className="h-7 w-2/3 bg-gray-200 mx-auto" />
-          <div className="h-3 w-full bg-gray-100" />
-          <div className="h-3 w-4/5 bg-gray-100 mx-auto" />
+          <Skeleton className="h-3 w-16 mx-auto" />
+          <Skeleton className="h-7 w-2/3 mx-auto" />
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-4/5 mx-auto" />
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mx-auto">
           {Array.from({ length: 8 }).map((_, i) => (

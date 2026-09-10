@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { LayoutGrid } from "lucide-react";
 import { Collection } from "@/lib/api/types";
-import SkeletonImage from "@/components/SkeletonImage";
+import SkeletonImage, { Skeleton } from "@/components/SkeletonImage";
 
 export default function CollectionList({
   data,
@@ -13,11 +13,11 @@ export default function CollectionList({
 }) {
   if (loading) {
     return (
-      <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6 mt-6 animate-pulse">
+      <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-6 mt-6">
         {Array.from({ length: 8 }).map((_, i) => (
           <div key={i} className="mb-8">
             <SkeletonImage className="aspect-3/4" />
-            <div className="h-3.5 w-3/4 bg-gray-200 mt-3" />
+            <Skeleton className="h-3.5 w-3/4 mt-3" />
           </div>
         ))}
       </div>

@@ -2,8 +2,10 @@
 
 import Filter from "@/components/Filter";
 import ProductList from "@/components/ProductList";
+import InfiniteScrollSentinel from "@/components/InfiniteScrollSentinel";
 import { getCategories, getProducts } from "@/lib/api";
-import { Category, Product, ProductType } from "@/lib/api/types";
+import { Category, ProductType } from "@/lib/api/types";
+import { useInfiniteList } from "@/lib/hooks/useInfiniteList";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
@@ -15,9 +17,7 @@ type Params = {
 export default function ProductListPage() {
   const { gender, filters } = useParams<Params>();
 
-  const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
 
   const categorySlug = filters?.[0] === "category" ? filters[1] : undefined;
@@ -29,24 +29,22 @@ export default function ProductListPage() {
       .catch((error) => console.error("Error fetching categories:", error));
   }, []);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const res = await getProducts({
-          type: gender as ProductType,
-          category: categorySlug,
-          onSale,
-        });
-        setProducts(res.data);
-      } catch (error) {
-        console.error("Error fetching products:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchData();
-  }, [gender, categorySlug, onSale]);
+  const {
+    items: products,
+    loading: isLoading,
+    loadingMore,
+    loadMoreError,
+    sentinelRef,
+  } = useInfiniteList(
+    (page) =>
+      getProducts({
+        page,
+        type: gender as ProductType,
+        category: categorySlug,
+        onSale,
+      }),
+    [gender, categorySlug, onSale],
+  );
 
   const title = useMemo(() => {
     const base = gender.charAt(0).toUpperCase() + gender.slice(1);
@@ -74,6 +72,13 @@ export default function ProductListPage() {
       <Filter isOpen={isOpen} setisOpen={setIsOpen} gender={gender} />
 
       <ProductList data={products} loading={isLoading} />
+      {!isLoading && (
+        <InfiniteScrollSentinel
+          sentinelRef={sentinelRef}
+          loadingMore={loadingMore}
+          loadMoreError={loadMoreError}
+        />
+      )}
     </div>
   );
 }

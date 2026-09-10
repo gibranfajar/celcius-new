@@ -4,7 +4,7 @@ import formatProductName from "@/lib/formatProductName";
 import Image from "next/image";
 import { PackageSearch } from "lucide-react";
 import { Product } from "@/lib/api/types";
-import SkeletonImage from "@/components/SkeletonImage";
+import SkeletonImage, { Skeleton } from "@/components/SkeletonImage";
 
 export default function ProductList({
   data,
@@ -15,12 +15,12 @@ export default function ProductList({
 }) {
   if (loading) {
     return (
-      <div className="grid px-4 grid-cols-2 md:grid-cols-3 gap-4 md:px-0 animate-pulse">
+      <div className="grid px-4 grid-cols-2 md:grid-cols-3 gap-4 md:px-0">
         {Array.from({ length: 9 }).map((_, i) => (
           <div key={i}>
             <SkeletonImage className="aspect-2/3" />
-            <div className="h-3 w-3/4 bg-gray-200 mt-3 mb-2" />
-            <div className="h-3 w-1/3 bg-gray-100" />
+            <Skeleton className="h-3 w-3/4 mt-3 mb-2" />
+            <Skeleton className="h-3 w-1/3" />
           </div>
         ))}
       </div>

@@ -185,3 +185,9 @@ textarea {
 .animate-shimmer {
   animation: shimmer 1.4s infinite;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-shimmer {
+    animation: none;
+  }
+}

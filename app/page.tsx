@@ -8,7 +8,7 @@ import { formatToIdr } from "@/lib/formatToIdr";
 import { formatMiniText } from "@/lib/formatMiniText";
 import { getProducts, getBanners, getLookbooks } from "@/lib/api";
 import { Banner, Lookbook, Product } from "@/lib/api/types";
-import SkeletonImage from "@/components/SkeletonImage";
+import SkeletonImage, { Skeleton } from "@/components/SkeletonImage";
 import {
   BANNER_DISPLAY_TYPES,
   bannersForDisplay,
@@ -64,28 +64,28 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <div className="animate-pulse">
+      <div>
         <SkeletonImage className="w-full aspect-4/5 md:aspect-video" />
 
         <div className="grid md:grid-cols-3 items-start p-6 gap-6">
           {[0, 1, 2].map((i) => (
             <div key={i}>
               <SkeletonImage className="aspect-3/4" />
-              <div className="h-4 w-2/3 bg-gray-200 mt-4 mb-2" />
-              <div className="h-3 w-full bg-gray-100 mb-1" />
-              <div className="h-3 w-4/5 bg-gray-100" />
+              <Skeleton className="h-4 w-2/3 mt-4 mb-2" />
+              <Skeleton className="h-3 w-full mb-1" />
+              <Skeleton className="h-3 w-4/5" />
             </div>
           ))}
         </div>
 
         <div className="p-4 md:p-6">
-          <div className="h-4 w-24 bg-gray-200 mx-auto mb-6" />
+          <Skeleton className="h-4 w-24 mx-auto mb-6" />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
               <div key={i}>
                 <SkeletonImage className="aspect-2/3" />
-                <div className="h-3 w-3/4 bg-gray-200 mt-3 mb-2" />
-                <div className="h-3 w-1/3 bg-gray-100" />
+                <Skeleton className="h-3 w-3/4 mt-3 mb-2" />
+                <Skeleton className="h-3 w-1/3" />
               </div>
             ))}
           </div>

@@ -1,5 +1,6 @@
 export * from "./client";
 export * from "./types";
+export * from "./fetchAllPages";
 export * from "./products";
 export * from "./collections";
 export * from "./categories";

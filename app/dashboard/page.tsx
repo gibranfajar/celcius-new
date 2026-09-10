@@ -9,8 +9,9 @@ import Promo from "@/components/Promo";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import { logout as logoutAction, setUser } from "@/redux/authSlice";
-import { getProfile, logout as apiLogout, listOrders } from "@/lib/api";
-import { Order as OrderType, User } from "@/lib/api/types";
+import { getProfile, logout as apiLogout } from "@/lib/api";
+import { User } from "@/lib/api/types";
+import { Skeleton } from "@/components/SkeletonImage";
 
 type Tab = "profile" | "orders" | "promo";
 
@@ -24,7 +25,6 @@ export default function Dashboard() {
   const dispatch = useDispatch();
   const token = useSelector((state: RootState) => state.auth.token);
   const [user, setLocalUser] = useState<User | null>(null);
-  const [orders, setOrders] = useState<OrderType[]>([]);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<Tab>("profile");
   const router = useRouter();
@@ -35,15 +35,6 @@ export default function Dashboard() {
     }
   }, [token, router]);
 
-  const fetchOrders = async () => {
-    try {
-      const response = await listOrders();
-      setOrders(response.data);
-    } catch (error) {
-      console.error("Error fetching orders:", error);
-    }
-  };
-
   useEffect(() => {
     if (!token) return;
 
@@ -53,7 +44,6 @@ export default function Dashboard() {
         const profile = await getProfile();
         setLocalUser(profile);
         dispatch(setUser(profile));
-        await fetchOrders();
       } catch (error: unknown) {
         console.error("Error fetching profile:", error);
         if (error && typeof error === "object" && "status" in error) {
@@ -84,17 +74,17 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="p-4 md:px-8 md:py-8 animate-pulse">
+      <div className="p-4 md:px-8 md:py-8">
         <div className="grid md:grid-cols-[240px_1fr] gap-8 max-w-5xl mx-auto">
           <div className="space-y-4">
-            <div className="h-16 w-16 rounded-full bg-gray-200" />
-            <div className="h-4 w-2/3 bg-gray-200" />
-            <div className="h-3 w-full bg-gray-100" />
+            <Skeleton className="h-16 w-16 rounded-full" />
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="h-3 w-full" />
           </div>
           <div className="space-y-3">
-            <div className="h-4 w-1/3 bg-gray-200" />
+            <Skeleton className="h-4 w-1/3" />
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-10 w-full bg-gray-100" />
+              <Skeleton key={i} className="h-10 w-full" />
             ))}
           </div>
         </div>
@@ -177,7 +167,7 @@ export default function Dashboard() {
               }}
             />
           )}
-          {active === "orders" && <Order orders={orders} onRefresh={fetchOrders} />}
+          {active === "orders" && <Order />}
           {active === "promo" && <Promo />}
         </div>
       </div>

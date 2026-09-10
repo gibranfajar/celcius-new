@@ -136,7 +136,7 @@ export default function LocationPage() {
 
       <div className="px-4 md:px-6 pb-16 max-w-6xl mx-auto">
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
               <SkeletonImage key={i} className="h-56" />
             ))}

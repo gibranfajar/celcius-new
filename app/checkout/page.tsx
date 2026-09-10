@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { listAddresses, getShippingCost, submitCheckout } from "@/lib/api";
 import { getErrorMessage } from "@/lib/api/client";
 import { ShippingRate, UserAddress } from "@/lib/api/types";
+import { Skeleton } from "@/components/SkeletonImage";
 
 const COURIERS = ["jne", "jnt", "sicepat"];
 
@@ -75,7 +76,9 @@ export default function CheckoutPage() {
   // carry a subdistrict id.
   const destination =
     manualAddress?.subdistrictId ||
-    (selectedAddress?.subdistrict_id ? String(selectedAddress.subdistrict_id) : null);
+    (selectedAddress?.subdistrict_id
+      ? String(selectedAddress.subdistrict_id)
+      : null);
 
   const totalWeight = cartItems.reduce(
     (sum, item) => sum + item.weight * item.quantity,
@@ -222,19 +225,19 @@ export default function CheckoutPage() {
 
   if (isLoading) {
     return (
-      <div className="p-4 md:p-10 bg-gray-50 min-h-screen animate-pulse">
-        <div className="h-7 w-32 bg-gray-200 mb-6" />
+      <div className="p-4 md:p-10 bg-gray-50 min-h-screen">
+        <Skeleton className="h-7 w-32 mb-6" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="bg-white border p-6 space-y-4">
-            <div className="h-5 w-1/2 bg-gray-200" />
-            <div className="h-16 w-full bg-gray-100" />
-            <div className="h-10 w-40 bg-gray-200" />
+            <Skeleton className="h-5 w-1/2" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-10 w-40" />
           </div>
           <div className="space-y-6">
             <div className="bg-white border p-6 space-y-3">
-              <div className="h-5 w-1/3 bg-gray-200" />
-              <div className="h-4 w-full bg-gray-100" />
-              <div className="h-4 w-2/3 bg-gray-100" />
+              <Skeleton className="h-5 w-1/3" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-2/3" />
             </div>
           </div>
         </div>
@@ -248,7 +251,9 @@ export default function CheckoutPage() {
         <ShoppingBag size={32} className="text-gray-300" />
         <div>
           <p className="font-medium text-zinc-700">Your cart is empty.</p>
-          <p className="text-sm text-zinc-500 mt-1">Add something to check out.</p>
+          <p className="text-sm text-zinc-500 mt-1">
+            Add something to check out.
+          </p>
         </div>
         <Link
           href="/"
@@ -264,7 +269,7 @@ export default function CheckoutPage() {
     <div className="p-4 md:p-10 bg-gray-50 min-h-screen">
       <h1 className="text-2xl font-semibold mb-6">Checkout</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mx-auto">
         {/* LEFT SIDE */}
         <div className="bg-white border border-zinc-200 p-6 space-y-6">
           <h2 className="font-semibold text-lg border-b pb-2">
@@ -460,7 +465,9 @@ export default function CheckoutPage() {
                 <p className="min-w-0">
                   {formatProductName(item.name)} ({item.size}) × {item.quantity}
                 </p>
-                <p className="shrink-0">{formatToIdr(item.finalPrice * item.quantity)}</p>
+                <p className="shrink-0">
+                  {formatToIdr(item.finalPrice * item.quantity)}
+                </p>
               </div>
             ))}
           </div>

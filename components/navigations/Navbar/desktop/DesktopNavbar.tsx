@@ -13,7 +13,12 @@ import "swiper/css/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { RootState } from "@/redux/store";
 import { useSelector } from "react-redux";
-import { getCategories, getCollections, getLookbooks } from "@/lib/api";
+import {
+  fetchAllPages,
+  getCategories,
+  getCollections,
+  getLookbooks,
+} from "@/lib/api";
 import { Category, Collection, Lookbook } from "@/lib/api/types";
 
 // The backend's `categories` endpoint has no gender/type field (only
@@ -64,16 +69,16 @@ export default function DesktopNavbar() {
       .then(setCategories)
       .catch((error) => console.error("Error fetching categories:", error));
 
-    getCollections()
-      .then((res) => setCollections(res.data))
+    fetchAllPages(getCollections)
+      .then(setCollections)
       .catch((error) => console.error("Error fetching collections:", error));
 
-    getLookbooks()
-      .then((res) => setLookbooks(res.data))
+    fetchAllPages(getLookbooks)
+      .then(setLookbooks)
       .catch((error) => console.error("Error fetching lookbooks:", error));
   }, []);
 
-  const MEGA_MENU_CHUNK_SIZE = 5;
+  const MEGA_MENU_CHUNK_SIZE = 6;
 
   const chunkedCollection = useMemo(() => {
     const chunks: Collection[][] = [];
@@ -97,7 +102,7 @@ export default function DesktopNavbar() {
         {label}
       </Link>
       <div
-        className="fixed left-0 right-0 top-10 bg-white -z-10 py-8 shadow-lg
+        className="fixed left-0 right-0 top-10 bg-white backdrop-blur-sm -z-10 py-8 shadow-lg
           opacity-0 invisible -translate-y-1 pointer-events-none
           transition-all duration-300 ease-out
           group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:pointer-events-auto"
@@ -193,7 +198,7 @@ export default function DesktopNavbar() {
     // would otherwise break CartBar/SearchBar/the overlay (all fixed, all
     // rendered further down as children of this component).
     <div className="hidden md:block sticky top-0 z-50 seccond-font">
-      <div className="flex bg-white/95 backdrop-blur-sm justify-between items-center py-4 px-6 border-b border-zinc-100">
+      <div className="flex bg-white backdrop-blur-sm justify-between items-center py-4 px-6 border-b border-zinc-100">
         {/* navbar kiri */}
         <ul className="flex items-center gap-6">
           {renderGenderMenu("men", "MENS")}
@@ -202,7 +207,7 @@ export default function DesktopNavbar() {
           <li className="relative group cursor-pointer text-xs tracking-wide">
             <span className="nav-link">COLLECTIONS</span>
             <div
-              className="fixed left-0 right-0 top-10 bg-white -z-10 py-8 shadow-lg
+              className="fixed left-0 right-0 top-10 bg-white backdrop-blur-sm -z-10 py-8 shadow-lg
               opacity-0 invisible -translate-y-1 pointer-events-none
               transition-all duration-300 ease-out
               group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:pointer-events-auto"
@@ -233,7 +238,7 @@ export default function DesktopNavbar() {
                     >
                       {chunkedCollection.map((group, index) => (
                         <SwiperSlide key={index}>
-                          <div className="grid grid-cols-5 gap-4">
+                          <div className="grid grid-cols-6 gap-4">
                             {group.map((item) => (
                               <Link
                                 href={`/collection/${item.slug}`}
@@ -282,7 +287,7 @@ export default function DesktopNavbar() {
           <li className="relative group cursor-pointer text-xs tracking-wide">
             <span className="nav-link">LOOKBOOK</span>
             <div
-              className="fixed left-0 right-0 top-10 bg-white -z-10 py-8 shadow-lg
+              className="fixed left-0 right-0 top-10 bg-white backdrop-blur-sm -z-10 py-8 shadow-lg
               opacity-0 invisible -translate-y-1 pointer-events-none
               transition-all duration-300 ease-out
               group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:pointer-events-auto"
@@ -313,7 +318,7 @@ export default function DesktopNavbar() {
                     >
                       {chunkedLookbooks.map((group, index) => (
                         <SwiperSlide key={index}>
-                          <div className="grid grid-cols-5 gap-4">
+                          <div className="grid grid-cols-6 gap-4">
                             {group.map((item) => (
                               <Link
                                 href={`/lookbook/${item.slug}`}

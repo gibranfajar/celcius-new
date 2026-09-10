@@ -63,8 +63,11 @@ export default function WomenHome() {
     <Swiper modules={[Autoplay]} autoplay={{ delay: 4000 }} loop>
       {banners.map((item) => (
         <SwiperSlide key={item.id}>
-          <div className="relative w-full aspect-4/5 md:aspect-5/1">
-            <Link href={`/collection/${item.collection?.slug ?? ""}`} className="block w-full h-full">
+          <div className="relative w-full aspect-9/16 md:aspect-3/1">
+            <Link
+              href={`/collection/${item.collection?.slug ?? ""}`}
+              className="block w-full h-full"
+            >
               <Image
                 src={item.image_url}
                 fill
@@ -94,15 +97,19 @@ export default function WomenHome() {
     </Swiper>
   );
 
-  const womenProducts = products.filter((item) => item.type === "women").slice(0, 8);
+  const womenProducts = products
+    .filter((item) => item.type === "women")
+    .slice(0, 8);
 
   return (
     <>
       {isLoading ? (
-        <SkeletonImage className="w-full aspect-4/5 md:aspect-5/1 animate-pulse" />
+        <SkeletonImage className="w-full aspect-9/16 md:aspect-3/1" />
       ) : (
         <>
-          {bannerTop.length > 0 && <div className="mb-1">{renderBannerByDevice(bannerTop)}</div>}
+          {bannerTop.length > 0 && (
+            <div className="mb-1">{renderBannerByDevice(bannerTop)}</div>
+          )}
           {bannerBottom.length > 0 && (
             <div className="mt-1">{renderBannerByDevice(bannerBottom)}</div>
           )}
@@ -111,7 +118,9 @@ export default function WomenHome() {
 
       {/* product grid */}
       <div className="p-4 md:p-6">
-        <h1 className="text-center font-medium mb-4 base-font text-lg">Celcius</h1>
+        <h1 className="text-center font-medium mb-4 base-font text-lg">
+          Celcius
+        </h1>
         <ProductList data={womenProducts} loading={isLoading} />
       </div>
     </>

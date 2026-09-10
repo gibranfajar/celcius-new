@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Newspaper } from "lucide-react";
 import { formatDate } from "@/lib/formatDate";
 import { getNews } from "@/lib/api";
 import { News } from "@/lib/api/types";
-import SkeletonImage from "@/components/SkeletonImage";
+import SkeletonImage, { Skeleton } from "@/components/SkeletonImage";
+import InfiniteScrollSentinel from "@/components/InfiniteScrollSentinel";
+import { useInfiniteList } from "@/lib/hooks/useInfiniteList";
 
 function NewsArticle({ item }: { item: News }) {
   const images = [...item.images].sort((a, b) => a.sort_order - b.sort_order);
@@ -57,24 +58,8 @@ function NewsArticle({ item }: { item: News }) {
 }
 
 export default function NewsPage() {
-  const [news, setNews] = useState<News[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchNews = async () => {
-      setLoading(true);
-      try {
-        const res = await getNews();
-        setNews(res.data);
-      } catch (error) {
-        console.error("Error fetching news:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchNews();
-  }, []);
+  const { items: news, loading, loadingMore, loadMoreError, sentinelRef } =
+    useInfiniteList<News>((page) => getNews(page), []);
 
   return (
     <div className="min-h-screen px-4 md:px-6 py-8 seccond-font">
@@ -86,12 +71,12 @@ export default function NewsPage() {
         )}
 
         {loading ? (
-          <div className="animate-pulse space-y-16">
+          <div className="space-y-16">
             {Array.from({ length: 2 }).map((_, i) => (
               <div key={i}>
                 <div className="max-w-2xl mx-auto mb-8 text-center space-y-3">
-                  <div className="h-3 w-20 bg-gray-200 mx-auto" />
-                  <div className="h-7 w-2/3 bg-gray-200 mx-auto" />
+                  <Skeleton className="h-3 w-20 mx-auto" />
+                  <Skeleton className="h-7 w-2/3 mx-auto" />
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {Array.from({ length: 4 }).map((_, j) => (
@@ -107,11 +92,18 @@ export default function NewsPage() {
             <p className="text-sm">No news yet.</p>
           </div>
         ) : (
-          <div className="space-y-20">
-            {news.map((item) => (
-              <NewsArticle key={item.id} item={item} />
-            ))}
-          </div>
+          <>
+            <div className="space-y-20">
+              {news.map((item) => (
+                <NewsArticle key={item.id} item={item} />
+              ))}
+            </div>
+            <InfiniteScrollSentinel
+              sentinelRef={sentinelRef}
+              loadingMore={loadingMore}
+              loadMoreError={loadMoreError}
+            />
+          </>
         )}
       </div>
     </div>

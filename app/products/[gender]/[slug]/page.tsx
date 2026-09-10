@@ -12,7 +12,7 @@ import { formatToIdr } from "@/lib/formatToIdr";
 import { getProduct, getProducts } from "@/lib/api";
 import { Product, ProductSize } from "@/lib/api/types";
 import RelatedProduct from "@/components/RelatedProducts";
-import SkeletonImage from "@/components/SkeletonImage";
+import SkeletonImage, { Skeleton } from "@/components/SkeletonImage";
 import toast from "react-hot-toast";
 import Image from "next/image";
 import { useDispatch } from "react-redux";
@@ -90,18 +90,18 @@ export default function ProductDetail() {
 
   if (isLoading) {
     return (
-      <div className="md:px-6 min-h-screen pt-4 animate-pulse mx-auto">
+      <div className="md:px-6 min-h-screen pt-4 mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <div className="px-4">
             <SkeletonImage className="aspect-square" />
           </div>
           <div className="px-4 space-y-4">
-            <div className="h-5 w-2/3 bg-gray-200" />
-            <div className="h-4 w-1/4 bg-gray-100" />
+            <Skeleton className="h-5 w-2/3" />
+            <Skeleton className="h-4 w-1/4" />
             <div className="h-px bg-gray-100 my-6" />
-            <div className="h-4 w-1/3 bg-gray-100" />
+            <Skeleton className="h-4 w-1/3" />
             <div className="h-px bg-gray-100 my-6" />
-            <div className="h-10 w-full bg-gray-200" />
+            <Skeleton className="h-10 w-full" />
           </div>
         </div>
       </div>

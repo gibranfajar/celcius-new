@@ -1,31 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import LookbookList from "@/components/LookbookList";
+import InfiniteScrollSentinel from "@/components/InfiniteScrollSentinel";
 import { getLookbooks } from "@/lib/api";
-import { getErrorMessage } from "@/lib/api/client";
-import { Lookbook } from "@/lib/api/types";
+import { useInfiniteList } from "@/lib/hooks/useInfiniteList";
 
 export default function LookbookPage() {
-  const [lookbooks, setLookbooks] = useState<Lookbook[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchLookbooks = async () => {
-      try {
-        const res = await getLookbooks();
-        setLookbooks(res.data);
-      } catch (err) {
-        console.error("Error fetching lookbooks:", err);
-        setError(getErrorMessage(err));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLookbooks();
-  }, []);
+  const { items, loading, loadingMore, error, loadMoreError, sentinelRef } =
+    useInfiniteList((page) => getLookbooks(page), []);
 
   return (
     <div className="p-4 md:px-6 min-h-screen pt-4 seccond-font">
@@ -39,7 +21,18 @@ export default function LookbookPage() {
         </div>
       )}
 
-      {!error && <LookbookList data={lookbooks} loading={loading} />}
+      {!error && (
+        <>
+          <LookbookList data={items} loading={loading} />
+          {!loading && (
+            <InfiniteScrollSentinel
+              sentinelRef={sentinelRef}
+              loadingMore={loadingMore}
+              loadMoreError={loadMoreError}
+            />
+          )}
+        </>
+      )}
     </div>
   );
 }
