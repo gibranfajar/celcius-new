@@ -342,3 +342,77 @@ export interface ShippingRate {
   cost: number;
   etd: string;
 }
+
+// Mirrors the shape of the group-wide Whiteboard membership/loyalty API
+// (proxied by clcs-backend's MembershipController), not this app's own data.
+export interface MembershipPromo {
+  id: number;
+  imageTitle: string;
+  imageSubTitle: string;
+  imageUrl: string;
+  promoTitle: string;
+  promoDetail: string;
+  promoLocation: string;
+  promoStartDate: string;
+  promoEndDate: string;
+  category: string;
+  brand: string;
+  isActive: boolean;
+}
+
+export interface MembershipTierInfo {
+  tier: string;
+  tier_name: string;
+  tierImage: string;
+  amountStartingFrom: number;
+  amountUpTo: number;
+  amountForNextTier: number;
+  memberPersentase: number;
+  profileImage: string;
+  cardImage: string;
+}
+
+export interface MembershipTierBenefit {
+  id: number;
+  tier: string;
+  amountStartingFrom: number;
+  amountUpTo: number;
+  minPurchase: number;
+  amountPoint: number;
+  benefitData: Record<string, string>;
+  status: string;
+}
+
+export interface MembershipMission {
+  id: number;
+  title: string;
+  category: string;
+  brand: string;
+  description: string;
+  currentValue: number;
+  maxValue: number;
+  progressText: string;
+  startDate: string;
+  endDate: string;
+  statusMission: string;
+}
+
+export interface MembershipProfile {
+  memberID: string;
+  fullName: string;
+  phone: string;
+  email: string;
+  province: string;
+  city: string;
+  joinDate: string;
+  expiredPoint: number;
+  tierInfo: MembershipTierInfo;
+  totalVoucher: number;
+  tierData: MembershipTierBenefit[];
+  missionsData: MembershipMission[];
+}
+
+export interface MembershipProfileResponse {
+  is_member: boolean;
+  data: MembershipProfile | null;
+}
