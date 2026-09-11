@@ -48,11 +48,15 @@ function PromoDetailModal({
 
       <div className="overflow-y-auto flex-1 min-h-0">
         {promo.imageUrl && (
+          // No fixed aspect ratio/object-cover here on purpose - these
+          // images come in whatever shape the CMS was given (some tall
+          // posters, some wide banners), and cropping to a fixed box was
+          // cutting content off. Full width, natural height instead.
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={promoImageUrl(promo.imageUrl)}
             alt={promo.promoTitle}
-            className="w-full aspect-4/3 object-cover bg-zinc-100"
+            className="w-full h-auto bg-zinc-100"
           />
         )}
 
@@ -93,14 +97,17 @@ function PromoCard({
       className="border border-zinc-200 text-left w-full flex gap-3 p-3 hover:border-black transition-colors cursor-pointer"
     >
       {promo.imageUrl ? (
+        // object-contain, not object-cover: these images aren't all the
+        // same aspect ratio, and cropping to fill the square was cutting
+        // off content.
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={promoImageUrl(promo.imageUrl)}
           alt={promo.promoTitle}
-          className="size-16 shrink-0 object-cover bg-zinc-100"
+          className="size-24 shrink-0 object-contain bg-zinc-100"
         />
       ) : (
-        <div className="size-16 shrink-0 bg-zinc-100" />
+        <div className="size-24 shrink-0 bg-zinc-100" />
       )}
 
       <div className="min-w-0 space-y-1">
