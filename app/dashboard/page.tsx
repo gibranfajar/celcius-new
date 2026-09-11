@@ -2,22 +2,24 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, User as UserIcon, Package, Tag } from "lucide-react";
+import { LogOut, User as UserIcon, Package, Tag, Award } from "lucide-react";
 import Profile from "@/components/Profile";
 import Order from "@/components/Order";
 import Promo from "@/components/Promo";
+import MembershipTier from "@/components/MembershipTier";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import { logout as logoutAction, setUser } from "@/redux/authSlice";
-import { getProfile, logout as apiLogout } from "@/lib/api";
-import { User } from "@/lib/api/types";
+import { getProfile, getMembershipProfile, logout as apiLogout } from "@/lib/api";
+import { MembershipProfile, User } from "@/lib/api/types";
 import { Skeleton } from "@/components/SkeletonImage";
 
-type Tab = "profile" | "orders" | "promo";
+type Tab = "profile" | "orders" | "tier" | "promo";
 
 const TABS: { id: Tab; label: string; icon: typeof UserIcon }[] = [
   { id: "profile", label: "Profile", icon: UserIcon },
   { id: "orders", label: "Orders", icon: Package },
+  { id: "tier", label: "Tier", icon: Award },
   { id: "promo", label: "Promo", icon: Tag },
 ];
 
@@ -27,6 +29,8 @@ export default function Dashboard() {
   const [user, setLocalUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<Tab>("profile");
+  const [membership, setMembership] = useState<MembershipProfile | null>(null);
+  const [membershipLoading, setMembershipLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -59,6 +63,18 @@ export default function Dashboard() {
     };
 
     load();
+  }, [token]);
+
+  // Fetched once here (not per-tab) so switching between Profile and Tier
+  // doesn't re-hit a slow, occasionally-cold-starting third-party API.
+  useEffect(() => {
+    if (!token) return;
+
+    setMembershipLoading(true);
+    getMembershipProfile()
+      .then((res) => setMembership(res.data))
+      .catch((error) => console.error("Error fetching membership profile:", error))
+      .finally(() => setMembershipLoading(false));
   }, [token]);
 
   const handleLogout = async () => {
@@ -165,9 +181,17 @@ export default function Dashboard() {
                 setLocalUser(updated);
                 dispatch(setUser(updated));
               }}
+              membership={membership}
+              membershipLoading={membershipLoading}
             />
           )}
           {active === "orders" && <Order />}
+          {active === "tier" && (
+            <MembershipTier
+              tierData={membership?.tierData ?? []}
+              loading={membershipLoading}
+            />
+          )}
           {active === "promo" && <Promo />}
         </div>
       </div>

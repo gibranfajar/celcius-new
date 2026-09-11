@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Award, Ticket } from "lucide-react";
-import { getMembershipProfile } from "@/lib/api";
 import { MembershipMission, MembershipProfile } from "@/lib/api/types";
 import { formatToIdr } from "@/lib/formatToIdr";
+import { tierImageUrl } from "@/lib/membershipAssetUrl";
 import { Skeleton } from "@/components/SkeletonImage";
 
 function MissionCard({ mission }: { mission: MembershipMission }) {
@@ -18,40 +17,20 @@ function MissionCard({ mission }: { mission: MembershipMission }) {
       <p className="font-medium">{mission.title}</p>
       <p className="text-zinc-500">{mission.description}</p>
       <div className="h-1.5 bg-zinc-100 overflow-hidden">
-        <div
-          className="h-full bg-black"
-          style={{ width: `${progress}%` }}
-        />
+        <div className="h-full bg-black" style={{ width: `${progress}%` }} />
       </div>
       <p className="text-zinc-400">{mission.progressText}</p>
     </div>
   );
 }
 
-export default function MembershipSummary() {
-  const [loading, setLoading] = useState(true);
-  const [isMember, setIsMember] = useState(false);
-  const [profile, setProfile] = useState<MembershipProfile | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    getMembershipProfile()
-      .then((res) => {
-        if (cancelled) return;
-        setIsMember(res.is_member);
-        setProfile(res.data);
-      })
-      .catch((error) => console.error("Error fetching membership profile:", error))
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
+export default function MembershipSummary({
+  profile,
+  loading,
+}: {
+  profile: MembershipProfile | null;
+  loading: boolean;
+}) {
   if (loading) {
     return <Skeleton className="h-28" />;
   }
@@ -59,18 +38,18 @@ export default function MembershipSummary() {
   // Membership is a separate, offline-store loyalty program - not every
   // customer of the web store is enrolled in it, so this quietly does
   // nothing rather than nagging non-members.
-  if (!isMember || !profile) return null;
+  if (!profile) return null;
 
   return (
     <div className="border border-zinc-200 p-4 space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
-          {profile.tierInfo.tierImage && (
-            // Third-party CDN with an unpredictable host - not worth adding
-            // to next.config's image domain allowlist for one small badge.
+          {profile.tierInfo.profileImage && (
+            // Third-party CDN, not worth adding to next.config's image
+            // domain allowlist for one small badge.
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={profile.tierInfo.tierImage}
+              src={tierImageUrl(profile.tierInfo.profileImage)}
               alt={profile.tierInfo.tier_name}
               className="size-10 shrink-0 object-contain"
             />

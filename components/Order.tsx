@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import MobileSheetModal from "@/components/MobileSheetModal";
-import MembershipSummary from "@/components/MembershipSummary";
 import { Skeleton } from "@/components/SkeletonImage";
 import {
   X,
@@ -377,7 +376,6 @@ export default function Order() {
     return (
       <div className="space-y-4">
         <h1 className="text-xl font-semibold">My Orders</h1>
-        <MembershipSummary />
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-24 border border-zinc-200" />
@@ -390,8 +388,6 @@ export default function Order() {
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">My Orders</h1>
-
-      <MembershipSummary />
 
       {orders.length === 0 && (
         <div className="flex flex-col items-center gap-3 text-gray-500 py-16">

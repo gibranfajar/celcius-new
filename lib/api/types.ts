@@ -377,6 +377,7 @@ export interface MembershipTierBenefit {
   tier: string;
   amountStartingFrom: number;
   amountUpTo: number;
+  tier_image: string;
   minPurchase: number;
   amountPoint: number;
   benefitData: Record<string, string>;

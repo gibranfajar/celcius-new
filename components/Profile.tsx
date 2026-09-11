@@ -5,6 +5,7 @@ import { AnimatePresence } from "framer-motion";
 import { toast } from "react-hot-toast";
 import { X } from "lucide-react";
 import MobileSheetModal from "@/components/MobileSheetModal";
+import MembershipSummary from "@/components/MembershipSummary";
 import {
   updateProfile,
   listAddresses,
@@ -17,7 +18,7 @@ import {
   getSubdistricts,
 } from "@/lib/api";
 import { getErrorMessage } from "@/lib/api/client";
-import { ShippingArea, User, UserAddress } from "@/lib/api/types";
+import { MembershipProfile, ShippingArea, User, UserAddress } from "@/lib/api/types";
 
 const emptyAddressForm = {
   receiver_name: "",
@@ -38,9 +39,13 @@ const emptyAddressForm = {
 export default function Profile({
   data,
   onUpdated,
+  membership,
+  membershipLoading,
 }: {
   data: User;
   onUpdated: (user: User) => void;
+  membership: MembershipProfile | null;
+  membershipLoading: boolean;
 }) {
   const [name, setName] = useState(data.name);
   const [email, setEmail] = useState(data.email);
@@ -211,6 +216,13 @@ export default function Profile({
     <div className="space-y-10">
       <div>
         <h1 className="text-2xl font-semibold mb-6">Profile</h1>
+
+        <div className="mb-6">
+          <MembershipSummary
+            profile={membership}
+            loading={membershipLoading}
+          />
+        </div>
 
         <form className="flex flex-col gap-4" onSubmit={handleSubmitProfile}>
           <input
