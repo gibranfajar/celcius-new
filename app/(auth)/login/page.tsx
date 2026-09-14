@@ -125,7 +125,10 @@ export default function Login() {
             <div className="flex flex-col items-center space-y-3 pt-2">
               <span className="text-sm">
                 Forgot password?{" "}
-                <Link href="/reset-password" className="underline hover:text-black">
+                <Link
+                  href="/reset-password"
+                  className="underline hover:text-black"
+                >
                   Click here!
                 </Link>
               </span>
@@ -154,7 +157,7 @@ export default function Login() {
           </p>
           <Link
             href="/register"
-            className="text-center text-sm bg-black text-white hover:text-black py-2 px-4 w-1/2 cursor-pointer hover:bg-white hover:border-black hover:border transition duration-300 ease-in-out"
+            className="text-center text-sm bg-black text-white hover:text-black py-2 px-4 w-2/3 cursor-pointer hover:bg-white hover:border-black hover:border transition duration-300 ease-in-out"
           >
             CREATE AN ACCOUNT
           </Link>

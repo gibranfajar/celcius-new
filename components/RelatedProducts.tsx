@@ -4,7 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { Product } from "@/lib/api/types";
 
-export default function RelatedProduct({ dataProduct }: { dataProduct: Product[] }) {
+export default function RelatedProduct({
+  dataProduct,
+}: {
+  dataProduct: Product[];
+}) {
   return (
     <div className="mt-6 base-font p-4 md:p-0">
       <h2 className="text-xl text-center mb-6">Related Products</h2>
@@ -40,7 +44,7 @@ export default function RelatedProduct({ dataProduct }: { dataProduct: Product[]
                   />
 
                   {hasDiscount && (
-                    <span className="absolute top-2 left-2 bg-red-600 text-white text-xs font-semibold px-2 py-1">
+                    <span className="absolute top-2 left-2 bg-black text-white text-xs font-semibold px-2 py-1">
                       {item.discount_type === "percent"
                         ? `-${item.discount_value}%`
                         : "SALE"}

@@ -41,10 +41,7 @@ export default function Home() {
 
         // Home grid: 4 of each so both genders are represented, not just
         // whichever happened to be newest overall.
-        setProducts([
-          ...menRes.data.slice(0, 4),
-          ...womenRes.data.slice(0, 4),
-        ]);
+        setProducts([...menRes.data.slice(0, 8)]);
         setBannerTop(banners.filter((item) => item.position === "top"));
         setBannerBottom(banners.filter((item) => item.position === "bottom"));
 
@@ -214,74 +211,73 @@ export default function Home() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {products.length > 0 ? (
               products.map((item) => {
-                  const hasDiscount = item.final_price < item.price;
-                  const variantImages = item.variants?.[0]?.images ?? [];
-                  const hoverImage =
-                    variantImages[3]?.url ?? item.thumbnail_url;
+                const hasDiscount = item.final_price < item.price;
+                const variantImages = item.variants?.[0]?.images ?? [];
+                const hoverImage = variantImages[3]?.url ?? item.thumbnail_url;
 
-                  return (
-                    <Link
-                      key={item.id}
-                      href={`/products/${item.type}/${item.slug}`}
-                      className="group cursor-pointer"
-                    >
-                      <div className="relative overflow-hidden">
-                        <Image
-                          src={item.thumbnail_url}
-                          loading="lazy"
-                          alt={item.name ?? ""}
-                          className="w-full h-auto object-cover transition-opacity duration-300 group-hover:opacity-0"
-                          width={400}
-                          height={600}
-                        />
-                        <Image
-                          src={hoverImage}
-                          loading="lazy"
-                          alt={item.name ?? ""}
-                          className="w-full h-auto object-cover absolute top-0 left-0 transition-opacity duration-300 opacity-0 group-hover:opacity-100"
-                          width={400}
-                          height={600}
-                        />
+                return (
+                  <Link
+                    key={item.id}
+                    href={`/products/${item.type}/${item.slug}`}
+                    className="group cursor-pointer"
+                  >
+                    <div className="relative overflow-hidden">
+                      <Image
+                        src={item.thumbnail_url}
+                        loading="lazy"
+                        alt={item.name ?? ""}
+                        className="w-full h-auto object-cover transition-opacity duration-300 group-hover:opacity-0"
+                        width={400}
+                        height={600}
+                      />
+                      <Image
+                        src={hoverImage}
+                        loading="lazy"
+                        alt={item.name ?? ""}
+                        className="w-full h-auto object-cover absolute top-0 left-0 transition-opacity duration-300 opacity-0 group-hover:opacity-100"
+                        width={400}
+                        height={600}
+                      />
+
+                      {hasDiscount && (
+                        <span className="absolute top-2 left-2 bg-black text-white text-xs font-semibold px-2 py-1">
+                          {item.discount_type === "percent"
+                            ? `-${item.discount_value}%`
+                            : "SALE"}
+                        </span>
+                      )}
+
+                      {item.variants && item.variants.length > 1 && (
+                        <span className="absolute bottom-2 right-2 bg-white/90 text-black text-[10px] font-semibold px-1.5 py-0.5">
+                          +{item.variants.length}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="mt-2 space-y-1">
+                      <h1 className="text-sm font-medium line-clamp-2 group-hover:text-gray-700 transition base-font">
+                        {formatProductName(item.name)}
+                      </h1>
+
+                      <div className="flex items-center gap-2 text-xs seccond-font">
+                        <span
+                          className={`font-semibold ${
+                            hasDiscount ? "text-black" : "text-gray-900"
+                          }`}
+                        >
+                          {formatToIdr(item.final_price)}
+                        </span>
 
                         {hasDiscount && (
-                          <span className="absolute top-2 left-2 bg-black text-white text-xs font-semibold px-2 py-1">
-                            {item.discount_type === "percent"
-                              ? `-${item.discount_value}%`
-                              : "SALE"}
-                          </span>
-                        )}
-
-                        {item.variants && item.variants.length > 1 && (
-                          <span className="absolute bottom-2 right-2 bg-white/90 text-black text-[10px] font-semibold px-1.5 py-0.5">
-                            +{item.variants.length}
+                          <span className="text-xs text-gray-400 line-through">
+                            {formatToIdr(item.price)}
                           </span>
                         )}
                       </div>
-
-                      <div className="mt-2 space-y-1">
-                        <h1 className="text-sm font-medium line-clamp-2 group-hover:text-gray-700 transition base-font">
-                          {formatProductName(item.name)}
-                        </h1>
-
-                        <div className="flex items-center gap-2 text-xs seccond-font">
-                          <span
-                            className={`font-semibold ${
-                              hasDiscount ? "text-black" : "text-gray-900"
-                            }`}
-                          >
-                            {formatToIdr(item.final_price)}
-                          </span>
-
-                          {hasDiscount && (
-                            <span className="text-xs text-gray-400 line-through">
-                              {formatToIdr(item.price)}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })
+                    </div>
+                  </Link>
+                );
+              })
             ) : (
               <div className="col-span-full text-center py-10 text-gray-500">
                 <p className="text-lg font-medium">Product not found.</p>

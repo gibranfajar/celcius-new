@@ -75,7 +75,7 @@ export default function MembershipSummary({
         </p>
       )}
 
-      {profile.missionsData.length > 0 && (
+      {/* {profile.missionsData.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs font-medium">Missions</p>
           <div className="flex gap-3 overflow-x-auto -mx-4 px-4">
@@ -84,7 +84,7 @@ export default function MembershipSummary({
             ))}
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 }

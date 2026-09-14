@@ -19,7 +19,7 @@ function TierCard({ tier }: { tier: MembershipTierBenefit }) {
       <img
         src={tierImageUrl(tier.tier_image)}
         alt={tier.tier}
-        className="size-14 shrink-0 object-contain"
+        className="size-24 shrink-0 object-contain"
       />
 
       <div className="min-w-0 space-y-1.5 flex-1">

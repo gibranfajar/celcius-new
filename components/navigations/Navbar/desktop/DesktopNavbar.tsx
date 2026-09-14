@@ -147,7 +147,7 @@ export default function DesktopNavbar() {
         {label}
       </button>
       <div
-        className={`fixed left-0 right-0 top-(--nav-h,2.5rem) bg-white backdrop-blur-sm -z-10 py-8 shadow-lg
+        className={`fixed left-0 right-0 bg-white backdrop-blur-sm -z-10 py-8 shadow-lg
           transition-all duration-300 ease-out
           ${dropdownVisibilityClasses(openMenu === gender)}`}
       >
@@ -264,7 +264,7 @@ export default function DesktopNavbar() {
               COLLECTIONS
             </button>
             <div
-              className={`fixed left-0 right-0 top-(--nav-h,2.5rem) bg-white backdrop-blur-sm -z-10 py-8 shadow-lg
+              className={`fixed left-0 right-0 bg-white backdrop-blur-sm -z-10 py-8 shadow-lg
               transition-all duration-300 ease-out
               ${dropdownVisibilityClasses(openMenu === "collections")}`}
             >
@@ -350,7 +350,7 @@ export default function DesktopNavbar() {
               LOOKBOOK
             </button>
             <div
-              className={`fixed left-0 right-0 top-(--nav-h,2.5rem) bg-white backdrop-blur-sm -z-10 py-8 shadow-lg
+              className={`fixed left-0 right-0 bg-white backdrop-blur-sm -z-10 py-8 shadow-lg
               transition-all duration-300 ease-out
               ${dropdownVisibilityClasses(openMenu === "lookbook")}`}
             >

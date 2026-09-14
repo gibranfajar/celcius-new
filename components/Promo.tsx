@@ -107,7 +107,7 @@ function PromoCard({
         <img
           src={promoImageUrl(promo.imageUrl)}
           alt={promo.promoTitle}
-          className="size-24 shrink-0 object-cover bg-zinc-100"
+          className="w-36 h-full object-cover"
         />
       ) : (
         <div className="size-24 shrink-0 bg-zinc-100" />
