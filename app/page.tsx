@@ -32,13 +32,19 @@ export default function Home() {
     const load = async () => {
       setIsLoading(true);
       try {
-        const [productsRes, banners, lookbooksRes] = await Promise.all([
-          getProducts(),
+        const [menRes, womenRes, banners, lookbooksRes] = await Promise.all([
+          getProducts({ type: "men" }),
+          getProducts({ type: "women" }),
           getBanners({ page: "men" }),
           getLookbooks(),
         ]);
 
-        setProducts(productsRes.data);
+        // Home grid: 4 of each so both genders are represented, not just
+        // whichever happened to be newest overall.
+        setProducts([
+          ...menRes.data.slice(0, 4),
+          ...womenRes.data.slice(0, 4),
+        ]);
         setBannerTop(banners.filter((item) => item.position === "top"));
         setBannerBottom(banners.filter((item) => item.position === "bottom"));
 
@@ -111,7 +117,10 @@ export default function Home() {
       {banners.map((item) => (
         <SwiperSlide key={item.id}>
           <div className="relative w-full aspect-4/5 md:aspect-video">
-            <Link href={`/collection/${item.collection?.slug ?? ""}`} className="block w-full h-full">
+            <Link
+              href={`/collection/${item.collection?.slug ?? ""}`}
+              className="block w-full h-full"
+            >
               <Image
                 src={item.image_url}
                 fill
@@ -203,15 +212,12 @@ export default function Home() {
         </h1>
         <div className="flex justify-center items-center">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {products.filter((item) => item.type === "men").length > 0 ? (
-              products
-                .filter((item) => item.type === "men")
-                .slice(0, 8)
-                .map((item) => {
+            {products.length > 0 ? (
+              products.map((item) => {
                   const hasDiscount = item.final_price < item.price;
                   const variantImages = item.variants?.[0]?.images ?? [];
                   const hoverImage =
-                    variantImages[1]?.url ?? item.thumbnail_url;
+                    variantImages[3]?.url ?? item.thumbnail_url;
 
                   return (
                     <Link
@@ -238,10 +244,16 @@ export default function Home() {
                         />
 
                         {hasDiscount && (
-                          <span className="absolute top-2 left-2 bg-red-600 text-white text-xs font-semibold px-2 py-1">
+                          <span className="absolute top-2 left-2 bg-black text-white text-xs font-semibold px-2 py-1">
                             {item.discount_type === "percent"
                               ? `-${item.discount_value}%`
                               : "SALE"}
+                          </span>
+                        )}
+
+                        {item.variants && item.variants.length > 1 && (
+                          <span className="absolute bottom-2 right-2 bg-white/90 text-black text-[10px] font-semibold px-1.5 py-0.5">
+                            +{item.variants.length}
                           </span>
                         )}
                       </div>

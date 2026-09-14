@@ -61,7 +61,7 @@ export default function SearchBar({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search..."
-            className="flex-1 px-4 py-2 border border-zinc-400 focus:outline-none"
+            className="flex-1 px-4 py-2 bg-zinc-100 focus:outline-none focus:bg-zinc-200 transition-colors"
           />
           <button
             type="submit"

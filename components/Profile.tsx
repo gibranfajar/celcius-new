@@ -227,7 +227,7 @@ export default function Profile({
         <form className="flex flex-col gap-4" onSubmit={handleSubmitProfile}>
           <input
             type="text"
-            className="border border-zinc-300 p-2.5 w-full text-sm focus:border-black"
+            className="bg-zinc-100 p-2.5 w-full text-sm outline-none focus:bg-zinc-200 transition-colors"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Name"
@@ -235,7 +235,7 @@ export default function Profile({
           />
           <input
             type="email"
-            className="border border-zinc-300 p-2.5 w-full text-sm focus:border-black"
+            className="bg-zinc-100 p-2.5 w-full text-sm outline-none focus:bg-zinc-200 transition-colors"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
@@ -243,7 +243,7 @@ export default function Profile({
           />
           <input
             type="text"
-            className="border border-zinc-300 p-2.5 w-full text-sm focus:border-black"
+            className="bg-zinc-100 p-2.5 w-full text-sm outline-none focus:bg-zinc-200 transition-colors"
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
             placeholder="Phone Number"
@@ -256,21 +256,21 @@ export default function Profile({
 
           <input
             type="password"
-            className="border border-zinc-300 p-2.5 w-full text-sm focus:border-black"
+            className="bg-zinc-100 p-2.5 w-full text-sm outline-none focus:bg-zinc-200 transition-colors"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             placeholder="Current Password"
           />
           <input
             type="password"
-            className="border border-zinc-300 p-2.5 w-full text-sm focus:border-black"
+            className="bg-zinc-100 p-2.5 w-full text-sm outline-none focus:bg-zinc-200 transition-colors"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="New Password"
           />
           <input
             type="password"
-            className="border border-zinc-300 p-2.5 w-full text-sm focus:border-black"
+            className="bg-zinc-100 p-2.5 w-full text-sm outline-none focus:bg-zinc-200 transition-colors"
             value={passwordConfirmation}
             onChange={(e) => setPasswordConfirmation(e.target.value)}
             placeholder="Confirm New Password"
@@ -370,7 +370,7 @@ export default function Profile({
               <div className="px-4 md:px-5 pb-5 space-y-3">
             <input
               type="text"
-              className="border border-zinc-300 p-2.5 w-full text-sm focus:border-black"
+              className="bg-zinc-100 p-2.5 w-full text-sm outline-none focus:bg-zinc-200 transition-colors"
               placeholder="Receiver Name"
               value={addressForm.receiver_name}
               onChange={(e) =>
@@ -380,7 +380,7 @@ export default function Profile({
             />
             <input
               type="text"
-              className="border border-zinc-300 p-2.5 w-full text-sm focus:border-black"
+              className="bg-zinc-100 p-2.5 w-full text-sm outline-none focus:bg-zinc-200 transition-colors"
               placeholder="Phone Number"
               value={addressForm.phone_number}
               onChange={(e) =>
@@ -391,7 +391,7 @@ export default function Profile({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <select
-                className="border border-zinc-300 p-2.5 w-full text-sm focus:border-black"
+                className="bg-zinc-100 p-2.5 w-full text-sm outline-none focus:bg-zinc-200 transition-colors"
                 value={addressForm.province_id}
                 onChange={(e) => {
                   const id = e.target.value;
@@ -422,7 +422,7 @@ export default function Profile({
               </select>
 
               <select
-                className="border border-zinc-300 p-2.5 w-full text-sm focus:border-black"
+                className="bg-zinc-100 p-2.5 w-full text-sm outline-none focus:bg-zinc-200 transition-colors"
                 value={addressForm.city_id}
                 disabled={!addressForm.province_id}
                 onChange={(e) => {
@@ -453,7 +453,7 @@ export default function Profile({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <select
-                className="border border-zinc-300 p-2.5 w-full text-sm focus:border-black"
+                className="bg-zinc-100 p-2.5 w-full text-sm outline-none focus:bg-zinc-200 transition-colors"
                 value={addressForm.district_id}
                 disabled={!addressForm.city_id}
                 onChange={(e) => {
@@ -479,7 +479,7 @@ export default function Profile({
               </select>
 
               <select
-                className="border border-zinc-300 p-2.5 w-full text-sm focus:border-black"
+                className="bg-zinc-100 p-2.5 w-full text-sm outline-none focus:bg-zinc-200 transition-colors"
                 value={addressForm.subdistrict_id}
                 disabled={!addressForm.district_id}
                 onChange={(e) => {
@@ -505,7 +505,7 @@ export default function Profile({
 
             <input
               type="text"
-              className="border border-zinc-300 p-2.5 w-full text-sm focus:border-black"
+              className="bg-zinc-100 p-2.5 w-full text-sm outline-none focus:bg-zinc-200 transition-colors"
               placeholder="Postal Code"
               value={addressForm.postal_code}
               onChange={(e) =>
@@ -515,7 +515,7 @@ export default function Profile({
             />
 
             <textarea
-              className="border border-zinc-300 p-2.5 w-full text-sm focus:border-black"
+              className="bg-zinc-100 p-2.5 w-full text-sm outline-none focus:bg-zinc-200 transition-colors"
               placeholder="Complete Address"
               rows={2}
               value={addressForm.address}

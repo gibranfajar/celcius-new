@@ -11,6 +11,7 @@ import formatProductName from "@/lib/formatProductName";
 import { formatToIdr } from "@/lib/formatToIdr";
 import { getProduct, getProducts } from "@/lib/api";
 import { Product, ProductSize } from "@/lib/api/types";
+import { sortProductSizes } from "@/lib/sortProductSizes";
 import RelatedProduct from "@/components/RelatedProducts";
 import SkeletonImage, { Skeleton } from "@/components/SkeletonImage";
 import toast from "react-hot-toast";
@@ -42,12 +43,24 @@ export default function ProductDetail() {
         setActiveVariantIndex(0);
         setSelectedSize(null);
 
-        const list = await getProducts();
-        setRelatedProducts(
-          list.data
-            .filter((p) => p.type === data.type && p.slug !== data.slug)
-            .slice(0, 4),
-        );
+        // Prefer products that actually share a category with this one; if
+        // it has no category (or nothing else in it), fall back to same
+        // gender so the section is never empty.
+        const category = data.categories?.[0]?.slug;
+        const categoryMatches = category
+          ? (await getProducts({ category, type: data.type })).data.filter(
+              (p) => p.slug !== data.slug,
+            )
+          : [];
+
+        const related =
+          categoryMatches.length > 0
+            ? categoryMatches
+            : (await getProducts({ type: data.type })).data.filter(
+                (p) => p.slug !== data.slug,
+              );
+
+        setRelatedProducts(related.slice(0, 4));
       } catch (error) {
         console.error("Error fetching product:", error);
         setProduct(null);
@@ -211,7 +224,7 @@ export default function ProductDetail() {
           <div className="flex justify-between items-center">
             <span className="font-semibold text-verysmall">SIZE</span>
             <div className="flex gap-2 flex-wrap justify-end">
-              {activeVariant.sizes.map((size) => {
+              {sortProductSizes(activeVariant.sizes).map((size) => {
                 const outOfStock = size.stock <= 0;
                 return (
                   <div

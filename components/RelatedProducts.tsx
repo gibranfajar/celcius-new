@@ -46,6 +46,12 @@ export default function RelatedProduct({ dataProduct }: { dataProduct: Product[]
                         : "SALE"}
                     </span>
                   )}
+
+                  {item.variants && item.variants.length > 1 && (
+                    <span className="absolute bottom-2 right-2 bg-white/90 text-black text-[10px] font-semibold px-1.5 py-0.5">
+                      +{item.variants.length}
+                    </span>
+                  )}
                 </div>
 
                 <div className="mt-2 space-y-1">

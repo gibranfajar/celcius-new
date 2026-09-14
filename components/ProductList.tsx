@@ -33,7 +33,7 @@ export default function ProductList({
         data.map((item) => {
           const hasDiscount = item.final_price < item.price;
           const variantImages = item.variants?.[0]?.images ?? [];
-          const hoverImage = variantImages[1]?.url ?? item.thumbnail_url;
+          const hoverImage = variantImages[3]?.url ?? item.thumbnail_url;
 
           return (
             <Link
@@ -66,6 +66,12 @@ export default function ProductList({
                       : "SALE"}
                   </span>
                 )}
+
+                {item.variants && item.variants.length > 1 && (
+                  <span className="absolute bottom-2 right-2 bg-white/90 text-black text-[10px] font-semibold px-1.5 py-0.5">
+                    +{item.variants.length}
+                  </span>
+                )}
               </div>
 
               <div className="mt-2.5 space-y-1">
@@ -96,8 +102,12 @@ export default function ProductList({
         <div className="col-span-full flex flex-col items-center gap-3 text-center py-20 text-gray-500">
           <PackageSearch size={28} className="text-gray-300" />
           <div>
-            <p className="text-sm font-medium text-gray-700">No products found.</p>
-            <p className="text-xs mt-1">Try changing the category or product type filter.</p>
+            <p className="text-sm font-medium text-gray-700">
+              No products found.
+            </p>
+            <p className="text-xs mt-1">
+              Try changing the category or product type filter.
+            </p>
           </div>
         </div>
       )}

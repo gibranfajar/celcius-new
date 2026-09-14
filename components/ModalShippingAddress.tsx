@@ -124,7 +124,7 @@ export default function ModalShippingAddress({
               name="receiverName"
               value={form.receiverName}
               onChange={handleChange}
-              className="border border-zinc-300 w-full p-2.5 text-sm focus:border-black"
+              className="bg-zinc-100 w-full p-2.5 text-sm outline-none focus:bg-zinc-200 transition-colors"
               placeholder="Enter your name"
             />
           </div>
@@ -136,7 +136,7 @@ export default function ModalShippingAddress({
               name="phone"
               value={form.phone}
               onChange={handleChange}
-              className="border border-zinc-300 w-full p-2.5 text-sm focus:border-black"
+              className="bg-zinc-100 w-full p-2.5 text-sm outline-none focus:bg-zinc-200 transition-colors"
               placeholder="Your phone number"
             />
           </div>
@@ -144,7 +144,7 @@ export default function ModalShippingAddress({
           <div>
             <label className="text-xs text-gray-600 mb-1 block">Province</label>
             <select
-              className="border border-zinc-300 w-full p-2.5 text-sm focus:border-black"
+              className="bg-zinc-100 w-full p-2.5 text-sm outline-none focus:bg-zinc-200 transition-colors"
               value={form.provinceId}
               onChange={(e) => {
                 const id = e.target.value;
@@ -177,7 +177,7 @@ export default function ModalShippingAddress({
           <div>
             <label className="text-xs text-gray-600 mb-1 block">City</label>
             <select
-              className="border border-zinc-300 w-full p-2.5 text-sm focus:border-black"
+              className="bg-zinc-100 w-full p-2.5 text-sm outline-none focus:bg-zinc-200 transition-colors"
               value={form.cityId}
               disabled={!form.provinceId}
               onChange={(e) => {
@@ -208,7 +208,7 @@ export default function ModalShippingAddress({
           <div>
             <label className="text-xs text-gray-600 mb-1 block">District</label>
             <select
-              className="border border-zinc-300 w-full p-2.5 text-sm focus:border-black"
+              className="bg-zinc-100 w-full p-2.5 text-sm outline-none focus:bg-zinc-200 transition-colors"
               value={form.districtId}
               disabled={!form.cityId}
               onChange={(e) => {
@@ -236,7 +236,7 @@ export default function ModalShippingAddress({
           <div>
             <label className="text-xs text-gray-600 mb-1 block">Subdistrict</label>
             <select
-              className="border border-zinc-300 w-full p-2.5 text-sm focus:border-black"
+              className="bg-zinc-100 w-full p-2.5 text-sm outline-none focus:bg-zinc-200 transition-colors"
               value={form.subdistrictId}
               disabled={!form.districtId}
               onChange={(e) => {
@@ -266,7 +266,7 @@ export default function ModalShippingAddress({
               name="postalCode"
               value={form.postalCode}
               onChange={handleChange}
-              className="border border-zinc-300 w-full p-2.5 text-sm focus:border-black"
+              className="bg-zinc-100 w-full p-2.5 text-sm outline-none focus:bg-zinc-200 transition-colors"
               placeholder="Postal code"
             />
           </div>
@@ -277,7 +277,7 @@ export default function ModalShippingAddress({
               name="address"
               value={form.address}
               onChange={handleChange}
-              className="border border-zinc-300 w-full p-2.5 text-sm focus:border-black"
+              className="bg-zinc-100 w-full p-2.5 text-sm outline-none focus:bg-zinc-200 transition-colors"
               rows={2}
               placeholder="Complete address"
             />

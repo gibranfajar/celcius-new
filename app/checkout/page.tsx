@@ -283,7 +283,7 @@ export default function CheckoutPage() {
                 type="email"
                 value={guestEmail}
                 onChange={(e) => setGuestEmail(e.target.value)}
-                className="w-full border border-zinc-300 px-3 py-2 text-sm focus:border-black"
+                className="w-full bg-zinc-100 px-3 py-2 text-sm outline-none focus:bg-zinc-200 transition-colors"
                 placeholder="you@example.com"
               />
             </div>
@@ -434,7 +434,7 @@ export default function CheckoutPage() {
               type="text"
               value={voucherCode}
               onChange={(e) => setVoucherCode(e.target.value)}
-              className="w-full border border-zinc-300 px-3 py-2 text-sm focus:border-black"
+              className="w-full bg-zinc-100 px-3 py-2 text-sm outline-none focus:bg-zinc-200 transition-colors"
               placeholder="Optional"
             />
           </div>
@@ -444,7 +444,7 @@ export default function CheckoutPage() {
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full border border-zinc-300 px-3 py-2 text-sm focus:border-black"
+              className="w-full bg-zinc-100 px-3 py-2 text-sm outline-none focus:bg-zinc-200 transition-colors"
               rows={2}
               placeholder="Optional"
             />

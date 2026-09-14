@@ -52,23 +52,23 @@ export default function Login() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder=" "
-                className="peer w-full border-b border-gray-300 bg-transparent py-2
-               focus:border-black focus:outline-none"
+                className="peer w-full bg-zinc-100 px-3 pt-5 pb-2 outline-none focus:bg-zinc-200 transition-colors"
               />
 
               <label
                 htmlFor="email"
                 className="
-                    absolute left-0 top-2
-                    bg-white px-1
+                    absolute left-3 top-1/2 -translate-y-1/2
                     text-sm text-gray-500
                     transition-all duration-200 ease-out
 
-                    peer-focus:-top-3
+                    peer-focus:top-2
+                    peer-focus:translate-y-0
                     peer-focus:text-xs
                     peer-focus:text-black
 
-                    peer-not-placeholder-shown:-top-3
+                    peer-not-placeholder-shown:top-2
+                    peer-not-placeholder-shown:translate-y-0
                     peer-not-placeholder-shown:text-xs
                     peer-not-placeholder-shown:text-black
                   "
@@ -86,22 +86,23 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 placeholder=" "
-                className="peer w-full border-b border-gray-300 bg-transparent py-2 pr-10
-               focus:border-black focus:outline-none"
+                className="peer w-full bg-zinc-100 px-3 pt-5 pb-2 pr-10 outline-none focus:bg-zinc-200 transition-colors"
               />
 
               <label
                 htmlFor="password"
                 className="
-                  absolute left-0 top-2
+                  absolute left-3 top-1/2 -translate-y-1/2
                   text-sm text-gray-500
                   transition-all duration-200 ease-out
 
-                  peer-focus:-top-3
+                  peer-focus:top-2
+                  peer-focus:translate-y-0
                   peer-focus:text-xs
                   peer-focus:text-black
 
-                  peer-not-placeholder-shown:-top-3
+                  peer-not-placeholder-shown:top-2
+                  peer-not-placeholder-shown:translate-y-0
                   peer-not-placeholder-shown:text-xs
                   peer-not-placeholder-shown:text-black
                 "
@@ -112,7 +113,7 @@ export default function Login() {
               <button
                 type="button"
                 onClick={() => setShowPassword((s) => !s)}
-                className="absolute right-0 top-1/2 -translate-y-1/2 p-2 cursor-pointer"
+                className="absolute right-1 top-1/2 -translate-y-1/2 p-2 cursor-pointer"
                 aria-pressed={showPassword}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >

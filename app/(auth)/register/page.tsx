@@ -56,20 +56,21 @@ export default function Register() {
                 onChange={(e) => setName(e.target.value)}
                 required
                 placeholder=" "
-                className="peer w-full border-b border-gray-300 bg-transparent py-2
-                 focus:border-black focus:outline-none"
+                className="peer w-full bg-zinc-100 px-3 pt-5 pb-2 outline-none focus:bg-zinc-200 transition-colors"
               />
               <label
                 htmlFor="name"
                 className="
-                    absolute left-0 top-2
+                    absolute left-3 top-1/2 -translate-y-1/2
                     text-sm text-gray-500 transition-all duration-200 ease-out
 
-                    peer-focus:-top-3
+                    peer-focus:top-2
+                    peer-focus:translate-y-0
                     peer-focus:text-xs
                     peer-focus:text-black
 
-                    peer-not-placeholder-shown:-top-3
+                    peer-not-placeholder-shown:top-2
+                    peer-not-placeholder-shown:translate-y-0
                     peer-not-placeholder-shown:text-xs
                     peer-not-placeholder-shown:text-black
                   "
@@ -87,20 +88,21 @@ export default function Register() {
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 required
                 placeholder=" "
-                className="peer w-full border-b border-gray-300 bg-transparent py-2
-                 focus:border-black focus:outline-none"
+                className="peer w-full bg-zinc-100 px-3 pt-5 pb-2 outline-none focus:bg-zinc-200 transition-colors"
               />
               <label
                 htmlFor="phone"
                 className="
-                    absolute left-0 top-2
+                    absolute left-3 top-1/2 -translate-y-1/2
                     text-sm text-gray-500 transition-all duration-200 ease-out
 
-                    peer-focus:-top-3
+                    peer-focus:top-2
+                    peer-focus:translate-y-0
                     peer-focus:text-xs
                     peer-focus:text-black
 
-                    peer-not-placeholder-shown:-top-3
+                    peer-not-placeholder-shown:top-2
+                    peer-not-placeholder-shown:translate-y-0
                     peer-not-placeholder-shown:text-xs
                     peer-not-placeholder-shown:text-black
                   "
@@ -118,20 +120,21 @@ export default function Register() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder=" "
-                className="peer w-full border-b border-gray-300 bg-transparent py-2
-                 focus:border-black focus:outline-none"
+                className="peer w-full bg-zinc-100 px-3 pt-5 pb-2 outline-none focus:bg-zinc-200 transition-colors"
               />
               <label
                 htmlFor="email"
                 className="
-                    absolute left-0 top-2
+                    absolute left-3 top-1/2 -translate-y-1/2
                     text-sm text-gray-500 transition-all duration-200 ease-out
 
-                    peer-focus:-top-3
+                    peer-focus:top-2
+                    peer-focus:translate-y-0
                     peer-focus:text-xs
                     peer-focus:text-black
 
-                    peer-not-placeholder-shown:-top-3
+                    peer-not-placeholder-shown:top-2
+                    peer-not-placeholder-shown:translate-y-0
                     peer-not-placeholder-shown:text-xs
                     peer-not-placeholder-shown:text-black
                   "
@@ -149,20 +152,21 @@ export default function Register() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 placeholder=" "
-                className="peer w-full border-b border-gray-300 bg-transparent py-2 pr-10
-                 focus:border-black focus:outline-none"
+                className="peer w-full bg-zinc-100 px-3 pt-5 pb-2 pr-10 outline-none focus:bg-zinc-200 transition-colors"
               />
               <label
                 htmlFor="password"
                 className="
-                    absolute left-0 top-2
+                    absolute left-3 top-1/2 -translate-y-1/2
                     text-sm text-gray-500 transition-all duration-200 ease-out
 
-                    peer-focus:-top-3
+                    peer-focus:top-2
+                    peer-focus:translate-y-0
                     peer-focus:text-xs
                     peer-focus:text-black
 
-                    peer-not-placeholder-shown:-top-3
+                    peer-not-placeholder-shown:top-2
+                    peer-not-placeholder-shown:translate-y-0
                     peer-not-placeholder-shown:text-xs
                     peer-not-placeholder-shown:text-black
                   "
@@ -173,7 +177,7 @@ export default function Register() {
               <button
                 type="button"
                 onClick={() => setShowPassword((s) => !s)}
-                className="absolute right-0 top-1/2 -translate-y-1/2 p-2"
+                className="absolute right-1 top-1/2 -translate-y-1/2 p-2"
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -188,20 +192,21 @@ export default function Register() {
                 onChange={(e) => setPasswordConfirmation(e.target.value)}
                 required
                 placeholder=" "
-                className="peer w-full border-b border-gray-300 bg-transparent py-2 pr-10
-                 focus:border-black focus:outline-none"
+                className="peer w-full bg-zinc-100 px-3 pt-5 pb-2 pr-10 outline-none focus:bg-zinc-200 transition-colors"
               />
               <label
                 htmlFor="password_confirmation"
                 className="
-                    absolute left-0 top-2
+                    absolute left-3 top-1/2 -translate-y-1/2
                     text-sm text-gray-500 transition-all duration-200 ease-out
 
-                    peer-focus:-top-3
+                    peer-focus:top-2
+                    peer-focus:translate-y-0
                     peer-focus:text-xs
                     peer-focus:text-black
 
-                    peer-not-placeholder-shown:-top-3
+                    peer-not-placeholder-shown:top-2
+                    peer-not-placeholder-shown:translate-y-0
                     peer-not-placeholder-shown:text-xs
                     peer-not-placeholder-shown:text-black
                   "
