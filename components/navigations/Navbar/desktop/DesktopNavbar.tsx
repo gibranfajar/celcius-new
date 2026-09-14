@@ -102,7 +102,7 @@ export default function DesktopNavbar() {
         {label}
       </Link>
       <div
-        className="fixed left-0 right-0 top-10 bg-white backdrop-blur-sm -z-10 py-8 shadow-lg
+        className="fixed left-0 right-0 top-(--nav-h,2.5rem) bg-white backdrop-blur-sm -z-10 py-8 shadow-lg
           opacity-0 invisible -translate-y-1 pointer-events-none
           transition-all duration-300 ease-out
           group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:pointer-events-auto"
@@ -207,7 +207,7 @@ export default function DesktopNavbar() {
           <li className="relative group cursor-pointer text-xs tracking-wide">
             <span className="nav-link">COLLECTIONS</span>
             <div
-              className="fixed left-0 right-0 top-10 bg-white backdrop-blur-sm -z-10 py-8 shadow-lg
+              className="fixed left-0 right-0 top-(--nav-h,2.5rem) bg-white backdrop-blur-sm -z-10 py-8 shadow-lg
               opacity-0 invisible -translate-y-1 pointer-events-none
               transition-all duration-300 ease-out
               group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:pointer-events-auto"
@@ -287,7 +287,7 @@ export default function DesktopNavbar() {
           <li className="relative group cursor-pointer text-xs tracking-wide">
             <span className="nav-link">LOOKBOOK</span>
             <div
-              className="fixed left-0 right-0 top-10 bg-white backdrop-blur-sm -z-10 py-8 shadow-lg
+              className="fixed left-0 right-0 top-(--nav-h,2.5rem) bg-white backdrop-blur-sm -z-10 py-8 shadow-lg
               opacity-0 invisible -translate-y-1 pointer-events-none
               transition-all duration-300 ease-out
               group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:pointer-events-auto"

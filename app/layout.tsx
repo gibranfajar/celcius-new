@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/navigations/Navbar/Navbar";
 import Footer from "@/components/navigations/Footer";
-import GuestSignupBar from "@/components/GuestSignupBar";
 import GuestSignupWidgets from "@/components/GuestSignupWidgets";
+import WhatsAppButton from "@/components/WhatsAppButton";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { Toaster } from "react-hot-toast";
 import { Providers } from "@/redux/providers";
@@ -23,9 +23,9 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased min-h-screen seccond-font">
         <Providers>
-          <GuestSignupBar />
           <Navbar />
           <GuestSignupWidgets />
+          <WhatsAppButton />
           <main className="relative min-h-screen">{children}</main>
           <Footer />
           <Toaster
