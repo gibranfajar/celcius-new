@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/navigations/Navbar/Navbar";
 import Footer from "@/components/navigations/Footer";
-import GuestSignupWidgets from "@/components/GuestSignupWidgets";
+import GuestSignupCard from "@/components/GuestSignupCard";
+import GuestSignupPopup from "@/components/GuestSignupPopup";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { Toaster } from "react-hot-toast";
@@ -24,8 +25,14 @@ export default function RootLayout({
       <body className="antialiased min-h-screen seccond-font">
         <Providers>
           <Navbar />
-          <GuestSignupWidgets />
-          <WhatsAppButton />
+          <GuestSignupPopup />
+          {/* Stacked bottom-right: WhatsApp sits above the sign-up card, and
+              drops down into its spot once the card is dismissed, since a
+              missing flex child leaves no gap behind. */}
+          <div className="fixed bottom-4 right-4 z-40 flex flex-col items-end gap-3">
+            <WhatsAppButton />
+            <GuestSignupCard />
+          </div>
           <main className="relative min-h-screen">{children}</main>
           <Footer />
           <Toaster
