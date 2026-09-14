@@ -3,14 +3,15 @@
 import Link from "next/link";
 import Logo from "@/public/images/logo.png";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import SearchBar from "../../../SearchBar";
 import CartBar from "../../../CartBar";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronDown } from "lucide-react";
 import { RootState } from "@/redux/store";
 import { useSelector } from "react-redux";
 import {
@@ -54,8 +55,11 @@ function CategoryColumns({
   );
 }
 
+type MenuKey = "men" | "women" | "collections" | "lookbook";
+
 export default function DesktopNavbar() {
   const token = useSelector((state: RootState) => state.auth.token);
+  const pathname = usePathname();
 
   const [isOpenSearch, setIsOpenSearch] = useState(false);
   const [isOpenCarts, setIsOpenCarts] = useState(false);
@@ -63,6 +67,29 @@ export default function DesktopNavbar() {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [lookbooks, setLookbooks] = useState<Lookbook[]>([]);
   const cartItems = useSelector((state: RootState) => state.cart.items);
+
+  // On mouse/desktop, :hover already opens these mega menus. On touch
+  // devices (tablets in particular, which fall into this md:block layout)
+  // there's no hover, and tapping the gender link would just navigate
+  // straight to it before the menu could ever be seen - so a tap on the
+  // chevron toggles it open via this state instead, independent of hover.
+  const [openMenu, setOpenMenu] = useState<MenuKey | null>(null);
+  const navRef = useRef<HTMLUListElement>(null);
+
+  useEffect(() => setOpenMenu(null), [pathname]);
+
+  useEffect(() => {
+    if (!openMenu) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!navRef.current?.contains(event.target as Node)) {
+        setOpenMenu(null);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [openMenu]);
 
   useEffect(() => {
     getCategories()
@@ -96,16 +123,47 @@ export default function DesktopNavbar() {
     return chunks;
   }, [lookbooks]);
 
+  // On top of the CSS-only `group-hover` reveal (for mouse/desktop), also
+  // reveal when `isOpen` (the touch-friendly chevron toggle) is set - either
+  // one shows the panel.
+  const dropdownVisibilityClasses = (isOpen: boolean) =>
+    isOpen
+      ? "opacity-100 visible translate-y-0 pointer-events-auto"
+      : "opacity-0 invisible -translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:pointer-events-auto";
+
+  const renderMenuToggle = (menuKey: MenuKey, label: string) => (
+    <button
+      type="button"
+      aria-label={`Toggle ${label} menu`}
+      aria-expanded={openMenu === menuKey}
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setOpenMenu((current) => (current === menuKey ? null : menuKey));
+      }}
+      className="p-1 -m-1 cursor-pointer"
+    >
+      <ChevronDown
+        size={12}
+        className={`transition-transform duration-200 ${
+          openMenu === menuKey ? "rotate-180" : ""
+        }`}
+      />
+    </button>
+  );
+
   const renderGenderMenu = (gender: "men" | "women", label: string) => (
     <li className="relative group cursor-pointer text-xs tracking-wide">
-      <Link href={gender === "men" ? "/" : "/women"} className="nav-link">
-        {label}
-      </Link>
+      <div className="flex items-center gap-1">
+        <Link href={gender === "men" ? "/" : "/women"} className="nav-link">
+          {label}
+        </Link>
+        {renderMenuToggle(gender, label)}
+      </div>
       <div
-        className="fixed left-0 right-0 top-(--nav-h,2.5rem) bg-white backdrop-blur-sm -z-10 py-8 shadow-lg
-          opacity-0 invisible -translate-y-1 pointer-events-none
+        className={`fixed left-0 right-0 top-(--nav-h,2.5rem) bg-white backdrop-blur-sm -z-10 py-8 shadow-lg
           transition-all duration-300 ease-out
-          group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:pointer-events-auto"
+          ${dropdownVisibilityClasses(openMenu === gender)}`}
       >
         <div className="grid grid-cols-2  px-6">
           {/* Kolom Kiri: kategori */}
@@ -200,17 +258,19 @@ export default function DesktopNavbar() {
     <div className="hidden md:block sticky top-0 z-50 seccond-font">
       <div className="flex bg-white backdrop-blur-sm justify-between items-center py-4 px-6 border-b border-zinc-100">
         {/* navbar kiri */}
-        <ul className="flex items-center gap-6">
+        <ul ref={navRef} className="flex items-center gap-6">
           {renderGenderMenu("men", "MENS")}
           {renderGenderMenu("women", "WOMENS")}
 
           <li className="relative group cursor-pointer text-xs tracking-wide">
-            <span className="nav-link">COLLECTIONS</span>
+            <div className="flex items-center gap-1">
+              <span className="nav-link">COLLECTIONS</span>
+              {renderMenuToggle("collections", "Collections")}
+            </div>
             <div
-              className="fixed left-0 right-0 top-(--nav-h,2.5rem) bg-white backdrop-blur-sm -z-10 py-8 shadow-lg
-              opacity-0 invisible -translate-y-1 pointer-events-none
+              className={`fixed left-0 right-0 top-(--nav-h,2.5rem) bg-white backdrop-blur-sm -z-10 py-8 shadow-lg
               transition-all duration-300 ease-out
-              group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:pointer-events-auto"
+              ${dropdownVisibilityClasses(openMenu === "collections")}`}
             >
               <div className=" px-6">
                 <div className="flex items-center justify-between mb-5">
@@ -285,12 +345,14 @@ export default function DesktopNavbar() {
           </li>
 
           <li className="relative group cursor-pointer text-xs tracking-wide">
-            <span className="nav-link">LOOKBOOK</span>
+            <div className="flex items-center gap-1">
+              <span className="nav-link">LOOKBOOK</span>
+              {renderMenuToggle("lookbook", "Lookbook")}
+            </div>
             <div
-              className="fixed left-0 right-0 top-(--nav-h,2.5rem) bg-white backdrop-blur-sm -z-10 py-8 shadow-lg
-              opacity-0 invisible -translate-y-1 pointer-events-none
+              className={`fixed left-0 right-0 top-(--nav-h,2.5rem) bg-white backdrop-blur-sm -z-10 py-8 shadow-lg
               transition-all duration-300 ease-out
-              group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:pointer-events-auto"
+              ${dropdownVisibilityClasses(openMenu === "lookbook")}`}
             >
               <div className=" px-6">
                 <div className="flex items-center justify-between mb-5">
