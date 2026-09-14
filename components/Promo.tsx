@@ -97,14 +97,17 @@ function PromoCard({
       className="border border-zinc-200 text-left w-full flex gap-3 p-3 hover:border-black transition-colors cursor-pointer"
     >
       {promo.imageUrl ? (
-        // object-contain, not object-cover: these images aren't all the
-        // same aspect ratio, and cropping to fill the square was cutting
-        // off content.
+        // object-cover on a fixed box: these images come in mixed aspect
+        // ratios, and object-contain let each card's image render at a
+        // different apparent size (letterboxed), which looked inconsistent
+        // across the list. Cropped-to-fill keeps every card's thumbnail the
+        // same size - the full image is still shown uncropped in the detail
+        // modal below.
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={promoImageUrl(promo.imageUrl)}
           alt={promo.promoTitle}
-          className="size-24 shrink-0 object-contain bg-zinc-100"
+          className="size-24 shrink-0 object-cover bg-zinc-100"
         />
       ) : (
         <div className="size-24 shrink-0 bg-zinc-100" />
