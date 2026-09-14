@@ -11,7 +11,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
-import { ArrowLeft, ArrowRight, ChevronDown } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { RootState } from "@/redux/store";
 import { useSelector } from "react-redux";
 import {
@@ -124,42 +124,28 @@ export default function DesktopNavbar() {
   }, [lookbooks]);
 
   // On top of the CSS-only `group-hover` reveal (for mouse/desktop), also
-  // reveal when `isOpen` (the touch-friendly chevron toggle) is set - either
-  // one shows the panel.
+  // reveal when `isOpen` (this menu's click/tap toggle) is set - either one
+  // shows the panel. The label itself is the toggle (no separate chevron):
+  // on mouse it opens via hover as before, on touch a tap opens it too
+  // instead of relying on hover alone.
   const dropdownVisibilityClasses = (isOpen: boolean) =>
     isOpen
       ? "opacity-100 visible translate-y-0 pointer-events-auto"
       : "opacity-0 invisible -translate-y-1 pointer-events-none group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:pointer-events-auto";
 
-  const renderMenuToggle = (menuKey: MenuKey, label: string) => (
-    <button
-      type="button"
-      aria-label={`Toggle ${label} menu`}
-      aria-expanded={openMenu === menuKey}
-      onClick={(event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        setOpenMenu((current) => (current === menuKey ? null : menuKey));
-      }}
-      className="p-1 -m-1 cursor-pointer"
-    >
-      <ChevronDown
-        size={12}
-        className={`transition-transform duration-200 ${
-          openMenu === menuKey ? "rotate-180" : ""
-        }`}
-      />
-    </button>
-  );
+  const toggleMenu = (menuKey: MenuKey) =>
+    setOpenMenu((current) => (current === menuKey ? null : menuKey));
 
   const renderGenderMenu = (gender: "men" | "women", label: string) => (
     <li className="relative group cursor-pointer text-xs tracking-wide">
-      <div className="flex items-center gap-1">
-        <Link href={gender === "men" ? "/" : "/women"} className="nav-link">
-          {label}
-        </Link>
-        {renderMenuToggle(gender, label)}
-      </div>
+      <button
+        type="button"
+        aria-expanded={openMenu === gender}
+        onClick={() => toggleMenu(gender)}
+        className="nav-link cursor-pointer"
+      >
+        {label}
+      </button>
       <div
         className={`fixed left-0 right-0 top-(--nav-h,2.5rem) bg-white backdrop-blur-sm -z-10 py-8 shadow-lg
           transition-all duration-300 ease-out
@@ -210,13 +196,19 @@ export default function DesktopNavbar() {
 
             <div className="flex flex-col gap-1">
               <p className="font-semibold text-xs tracking-wide mb-3">
-                {label} PAGE
+                {label}
               </p>
               <Link
                 href={`/products/${gender}/list/sale`}
                 className="nav-link text-xs text-red-600 hover:text-red-500 cursor-pointer w-fit"
               >
                 SALE
+              </Link>
+              <Link
+                href={gender === "men" ? "/" : "/women"}
+                className="nav-link text-xs text-zinc-500 hover:text-black cursor-pointer w-fit"
+              >
+                PAGE
               </Link>
             </div>
           </div>
@@ -263,10 +255,14 @@ export default function DesktopNavbar() {
           {renderGenderMenu("women", "WOMENS")}
 
           <li className="relative group cursor-pointer text-xs tracking-wide">
-            <div className="flex items-center gap-1">
-              <span className="nav-link">COLLECTIONS</span>
-              {renderMenuToggle("collections", "Collections")}
-            </div>
+            <button
+              type="button"
+              aria-expanded={openMenu === "collections"}
+              onClick={() => toggleMenu("collections")}
+              className="nav-link cursor-pointer"
+            >
+              COLLECTIONS
+            </button>
             <div
               className={`fixed left-0 right-0 top-(--nav-h,2.5rem) bg-white backdrop-blur-sm -z-10 py-8 shadow-lg
               transition-all duration-300 ease-out
@@ -345,10 +341,14 @@ export default function DesktopNavbar() {
           </li>
 
           <li className="relative group cursor-pointer text-xs tracking-wide">
-            <div className="flex items-center gap-1">
-              <span className="nav-link">LOOKBOOK</span>
-              {renderMenuToggle("lookbook", "Lookbook")}
-            </div>
+            <button
+              type="button"
+              aria-expanded={openMenu === "lookbook"}
+              onClick={() => toggleMenu("lookbook")}
+              className="nav-link cursor-pointer"
+            >
+              LOOKBOOK
+            </button>
             <div
               className={`fixed left-0 right-0 top-(--nav-h,2.5rem) bg-white backdrop-blur-sm -z-10 py-8 shadow-lg
               transition-all duration-300 ease-out
