@@ -84,9 +84,10 @@ export default function Faqs() {
                         : "grid-rows-[0fr] opacity-0"
                     }`}
                   >
-                    <div className="overflow-hidden text-sm text-gray-600 leading-relaxed whitespace-pre-line">
-                      {faq.answer}
-                    </div>
+                    <div
+                      className="overflow-hidden text-sm text-gray-600 leading-relaxed [&_ul]:list-disc [&_ul]:ml-6 [&_ol]:list-decimal [&_ol]:ml-6"
+                      dangerouslySetInnerHTML={{ __html: faq.answer }}
+                    />
                   </div>
                 </div>
               );
