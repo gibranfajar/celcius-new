@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { getProducts, getBanners } from "@/lib/api";
 import { Banner, Product } from "@/lib/api/types";
 import Image from "next/image";
-import ProductList from "@/components/ProductList";
 import SkeletonImage from "@/components/SkeletonImage";
 import BannerCarousel from "@/components/BannerCarousel";
 import formatProductName from "@/lib/formatProductName";
@@ -22,7 +21,7 @@ export default function WomenHome() {
       setIsLoading(true);
       try {
         const [productsRes, banners] = await Promise.all([
-          getProducts(),
+          getProducts({ type: "women" }),
           getBanners({ page: "women" }),
         ]);
 
@@ -39,9 +38,7 @@ export default function WomenHome() {
     load();
   }, []);
 
-  const womenProducts = products
-    .filter((item) => item.type === "women")
-    .slice(0, 8);
+  const womenProducts = products.slice(0, 8);
 
   return (
     <>
