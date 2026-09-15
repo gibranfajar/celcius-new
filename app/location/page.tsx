@@ -3,9 +3,10 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { MapPin, Phone, Clock } from "lucide-react";
-import { getLocations } from "@/lib/api";
-import { Location, ProductType } from "@/lib/api/types";
+import { getLocations, getBanners } from "@/lib/api";
+import { Banner, Location, ProductType } from "@/lib/api/types";
 import SkeletonImage from "@/components/SkeletonImage";
+import BannerCarousel from "@/components/BannerCarousel";
 
 function formatTime(time: string | null) {
   if (!time) return "-";
@@ -80,13 +81,20 @@ export default function LocationPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [gender, setGender] = useState<ProductType>("men");
   const [locations, setLocations] = useState<Location[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
 
   useEffect(() => {
     const fetchLocations = async () => {
       setLoading(true);
       try {
-        const data = await getLocations({ type: gender });
+        const [data, bannerData] = await Promise.all([
+          getLocations({ type: gender }),
+          getBanners({
+            page: gender === "men" ? "location-men" : "location-women",
+          }),
+        ]);
         setLocations(data);
+        setBanners(bannerData);
       } catch (error) {
         console.error("Error fetching locations:", error);
       } finally {
@@ -100,20 +108,27 @@ export default function LocationPage() {
   return (
     <div className="min-h-screen">
       {/* Banner */}
-      <div className="relative w-full aspect-16/7 md:aspect-21/6">
-        <Image
-          src={gender === "men" ? "/images/locationmen.jpg" : "/images/location-women.jpg"}
-          alt={`${gender} store locations`}
-          fill
-          priority
-          className="object-cover"
+      {banners.length > 0 ? (
+        <BannerCarousel
+          banners={banners}
+          sizeClasses={{ tablet: "aspect-16/7", desktop: "aspect-21/6" }}
         />
-        <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-          <h1 className="text-white text-2xl md:text-4xl tracking-wide base-font">
-            STORE LOCATOR
-          </h1>
+      ) : (
+        <div className="relative w-full aspect-16/7 md:aspect-21/6">
+          <Image
+            src={gender === "men" ? "/images/locationmen.jpg" : "/images/location-women.jpg"}
+            alt={`${gender} store locations`}
+            fill
+            priority
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+            <h1 className="text-white text-2xl md:text-4xl tracking-wide base-font">
+              STORE LOCATOR
+            </h1>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Toggle */}
       <div className="flex justify-center py-6 px-4">

@@ -7,17 +7,7 @@ import { Banner, Product } from "@/lib/api/types";
 import Image from "next/image";
 import ProductList from "@/components/ProductList";
 import SkeletonImage from "@/components/SkeletonImage";
-import {
-  BANNER_DISPLAY_TYPES,
-  bannersForDisplay,
-  getBannerDisplayClass,
-} from "@/lib/bannerDisplayClass";
-
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay } from "swiper/modules";
-
-import "swiper/css";
-import "swiper/css/pagination";
+import BannerCarousel from "@/components/BannerCarousel";
 import formatProductName from "@/lib/formatProductName";
 import { formatToIdr } from "@/lib/formatToIdr";
 
@@ -49,56 +39,6 @@ export default function WomenHome() {
     load();
   }, []);
 
-  const renderBannerByDevice = (banners: Banner[]) =>
-    BANNER_DISPLAY_TYPES.map((display) => {
-      const items = bannersForDisplay(banners, display);
-      if (items.length === 0) return null;
-
-      return (
-        <div key={display} className={getBannerDisplayClass(display)}>
-          {renderBannerSlider(items)}
-        </div>
-      );
-    });
-
-  const renderBannerSlider = (banners: Banner[]) => (
-    <Swiper modules={[Autoplay]} autoplay={{ delay: 4000 }} loop>
-      {banners.map((item) => (
-        <SwiperSlide key={item.id}>
-          <div className="relative w-full aspect-9/16 md:aspect-3/1">
-            <Link
-              href={`/collection/${item.collection?.slug ?? ""}`}
-              className="block w-full h-full"
-            >
-              <Image
-                src={item.image_url}
-                fill
-                priority
-                alt={item.title}
-                className="object-cover cursor-pointer"
-              />
-            </Link>
-
-            <div className="absolute inset-0 flex flex-col justify-end items-center text-center text-white px-8 pb-12 md:items-end md:text-right md:px-12 md:pb-6 pointer-events-none">
-              <h1 className="text-3xl md:text-4xl">{item.title}</h1>
-
-              <div className="flex gap-2 mt-4 md:flex-row md:gap-2 md:mt-2 pointer-events-auto">
-                {item.collection && (
-                  <Link
-                    href={`/collection/${item.collection.slug}`}
-                    className="relative text-sm"
-                  >
-                    Shop The Collection
-                  </Link>
-                )}
-              </div>
-            </div>
-          </div>
-        </SwiperSlide>
-      ))}
-    </Swiper>
-  );
-
   const womenProducts = products
     .filter((item) => item.type === "women")
     .slice(0, 8);
@@ -109,12 +49,18 @@ export default function WomenHome() {
         <SkeletonImage className="w-full aspect-9/16 md:aspect-3/1" />
       ) : (
         <>
-          {bannerTop.length > 0 && (
-            <div className="mb-1">{renderBannerByDevice(bannerTop)}</div>
-          )}
-          {bannerBottom.length > 0 && (
-            <div className="mt-1">{renderBannerByDevice(bannerBottom)}</div>
-          )}
+          <div className="mb-1">
+            <BannerCarousel
+              banners={bannerTop}
+              sizeClasses={{ tablet: "aspect-4/3", desktop: "aspect-3/1" }}
+            />
+          </div>
+          <div className="mt-1">
+            <BannerCarousel
+              banners={bannerBottom}
+              sizeClasses={{ tablet: "aspect-4/3", desktop: "aspect-3/1" }}
+            />
+          </div>
         </>
       )}
 

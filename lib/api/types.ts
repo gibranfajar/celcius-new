@@ -102,12 +102,14 @@ export interface Product {
   variants?: ProductVariant[];
 }
 
+export type BannerPage = "men" | "women" | "location-men" | "location-women";
+
 export interface Banner {
   id: number;
   title: string;
   image_url: string;
-  page: string;
-  position: string;
+  page: BannerPage;
+  position: "top" | "bottom";
   display: "desktop" | "tablet" | "mobile" | null;
   sort_order: number;
   collection?: Collection | null;

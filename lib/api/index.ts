@@ -19,3 +19,4 @@ export * from "./checkout";
 export * from "./shipping";
 export * from "./subscription";
 export * from "./membership";
+export * from "./vouchers";

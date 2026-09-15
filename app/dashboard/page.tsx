@@ -2,25 +2,33 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, User as UserIcon, Package, Tag, Award } from "lucide-react";
+import { LogOut, User as UserIcon, Package, Tag, Award, Ticket } from "lucide-react";
 import Profile from "@/components/Profile";
 import Order from "@/components/Order";
 import Promo from "@/components/Promo";
+import Voucher from "@/components/Voucher";
 import MembershipTier from "@/components/MembershipTier";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import { logout as logoutAction, setUser } from "@/redux/authSlice";
-import { getProfile, getMembershipProfile, logout as apiLogout } from "@/lib/api";
-import { MembershipProfile, User } from "@/lib/api/types";
+import {
+  getProfile,
+  getMembershipProfile,
+  listVouchers,
+  logout as apiLogout,
+} from "@/lib/api";
+import { getErrorMessage } from "@/lib/api/client";
+import { MembershipProfile, User, UserVoucher } from "@/lib/api/types";
 import { Skeleton } from "@/components/SkeletonImage";
 
-type Tab = "profile" | "orders" | "tier" | "promo";
+type Tab = "profile" | "orders" | "tier" | "promo" | "voucher";
 
 const TABS: { id: Tab; label: string; icon: typeof UserIcon }[] = [
   { id: "profile", label: "Profile", icon: UserIcon },
   { id: "orders", label: "Orders", icon: Package },
   { id: "tier", label: "Tier", icon: Award },
   { id: "promo", label: "Promo", icon: Tag },
+  { id: "voucher", label: "Voucher", icon: Ticket },
 ];
 
 export default function Dashboard() {
@@ -31,6 +39,9 @@ export default function Dashboard() {
   const [active, setActive] = useState<Tab>("profile");
   const [membership, setMembership] = useState<MembershipProfile | null>(null);
   const [membershipLoading, setMembershipLoading] = useState(true);
+  const [vouchers, setVouchers] = useState<UserVoucher[]>([]);
+  const [vouchersLoading, setVouchersLoading] = useState(true);
+  const [vouchersError, setVouchersError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -76,6 +87,32 @@ export default function Dashboard() {
       .catch((error) => console.error("Error fetching membership profile:", error))
       .finally(() => setMembershipLoading(false));
   }, [token]);
+
+  // Fetched once here (not per-tab) so the badge count next to the Voucher
+  // tab is available immediately, without waiting for that tab to be opened.
+  useEffect(() => {
+    if (!token) return;
+
+    setVouchersLoading(true);
+    listVouchers()
+      .then((data) => {
+        setVouchers(data);
+        setVouchersError(null);
+      })
+      .catch((error) => setVouchersError(getErrorMessage(error)))
+      .finally(() => setVouchersLoading(false));
+  }, [token]);
+
+  const usableVoucherCount = vouchers.filter(
+    (voucher) =>
+      !voucher.is_used &&
+      (!voucher.expired_at || new Date(voucher.expired_at) > new Date()),
+  ).length;
+
+  const tabLabel = (id: Tab, label: string) =>
+    id === "voucher" && usableVoucherCount > 0
+      ? `${label} (${usableVoucherCount})`
+      : label;
 
   const handleLogout = async () => {
     try {
@@ -140,7 +177,7 @@ export default function Dashboard() {
                 }`}
               >
                 <Icon size={13} />
-                {label.toUpperCase()}
+                {tabLabel(id, label).toUpperCase()}
               </button>
             ))}
           </div>
@@ -158,7 +195,7 @@ export default function Dashboard() {
                 }`}
               >
                 <Icon size={15} />
-                {label}
+                {tabLabel(id, label)}
               </button>
             ))}
           </div>
@@ -193,6 +230,13 @@ export default function Dashboard() {
             />
           )}
           {active === "promo" && <Promo />}
+          {active === "voucher" && (
+            <Voucher
+              vouchers={vouchers}
+              loading={vouchersLoading}
+              error={vouchersError}
+            />
+          )}
         </div>
       </div>
     </div>

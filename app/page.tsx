@@ -9,17 +9,7 @@ import { formatMiniText } from "@/lib/formatMiniText";
 import { getProducts, getBanners, getLookbooks } from "@/lib/api";
 import { Banner, Lookbook, Product } from "@/lib/api/types";
 import SkeletonImage, { Skeleton } from "@/components/SkeletonImage";
-import {
-  BANNER_DISPLAY_TYPES,
-  bannersForDisplay,
-  getBannerDisplayClass,
-} from "@/lib/bannerDisplayClass";
-
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay } from "swiper/modules";
-
-import "swiper/css";
-import "swiper/css/pagination";
+import BannerCarousel from "@/components/BannerCarousel";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
@@ -97,71 +87,12 @@ export default function Home() {
     );
   }
 
-  const renderBannerByDevice = (banners: Banner[]) =>
-    BANNER_DISPLAY_TYPES.map((display) => {
-      const items = bannersForDisplay(banners, display);
-      if (items.length === 0) return null;
-
-      return (
-        <div key={display} className={getBannerDisplayClass(display)}>
-          {renderBannerSlider(items)}
-        </div>
-      );
-    });
-
-  const renderBannerSlider = (banners: Banner[]) => (
-    <Swiper modules={[Autoplay]} autoplay={{ delay: 4000 }} loop>
-      {banners.map((item) => (
-        <SwiperSlide key={item.id}>
-          <div className="relative w-full aspect-4/5 md:aspect-video">
-            <Link
-              href={`/collection/${item.collection?.slug ?? ""}`}
-              className="block w-full h-full"
-            >
-              <Image
-                src={item.image_url}
-                fill
-                priority
-                alt={item.title ?? ""}
-                className="object-cover cursor-pointer"
-              />
-            </Link>
-
-            <div className="absolute inset-0 flex flex-col justify-end items-center text-center text-white px-8 pb-12 md:items-end md:text-right md:px-12 md:pb-6 pointer-events-none">
-              <h1 className="text-3xl md:text-4xl">{item.title}</h1>
-
-              <div className="flex gap-2 mt-4 md:flex-row md:gap-2 md:mt-2 pointer-events-auto">
-                {item.collection && (
-                  <Link
-                    href={`/collection/${item.collection.slug}`}
-                    className="relative text-sm"
-                  >
-                    Shop The Collection
-                  </Link>
-                )}
-
-                {item.lookbook && (
-                  <Link
-                    href={`/lookbook/${item.lookbook.slug}`}
-                    className="relative text-sm"
-                  >
-                    View The Lookbook
-                  </Link>
-                )}
-              </div>
-            </div>
-          </div>
-        </SwiperSlide>
-      ))}
-    </Swiper>
-  );
-
   return (
     <>
       {/* Banner Atas */}
-      {bannerTop.length > 0 && (
-        <div className="space-y-2">{renderBannerByDevice(bannerTop)}</div>
-      )}
+      <div className="space-y-2">
+        <BannerCarousel banners={bannerTop} showLookbookLink />
+      </div>
 
       {/* Grid Lookbook */}
       <div className="grid md:grid-cols-3 items-start p-6 gap-6 base-font">
@@ -198,9 +129,9 @@ export default function Home() {
       </div>
 
       {/* Banner Bawah */}
-      {bannerBottom.length > 0 && (
-        <div className="space-y-2">{renderBannerByDevice(bannerBottom)}</div>
-      )}
+      <div className="space-y-2">
+        <BannerCarousel banners={bannerBottom} showLookbookLink />
+      </div>
 
       {/* product grid */}
       <div className="p-4 md:p-6">
