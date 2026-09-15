@@ -8,6 +8,7 @@ export * from "./banners";
 export * from "./lookbooks";
 export * from "./news";
 export * from "./productCares";
+export * from "./faqs";
 export * from "./about";
 export * from "./locations";
 export * from "./pages";

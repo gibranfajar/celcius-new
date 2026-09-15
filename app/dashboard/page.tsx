@@ -153,7 +153,7 @@ export default function Dashboard() {
     <div className="p-4 md:px-8 md:py-8 seccond-font">
       <div className="grid md:grid-cols-[240px_1fr] gap-8 max-w-5xl mx-auto">
         {/* Sidebar */}
-        <div>
+        <div className="min-w-0">
           <div className="flex items-center gap-3 mb-6">
             <div className="h-12 w-12 shrink-0 rounded-full bg-black text-white flex items-center justify-center text-lg font-semibold">
               {user.name.charAt(0).toUpperCase()}

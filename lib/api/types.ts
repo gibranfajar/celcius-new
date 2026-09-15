@@ -156,6 +156,14 @@ export interface ProductCare {
   image_detail_url: string;
 }
 
+export interface Faq {
+  id: number;
+  question: string;
+  answer: string;
+  category: string | null;
+  category_label: string | null;
+}
+
 export interface About {
   content: string;
   image_url: string;
