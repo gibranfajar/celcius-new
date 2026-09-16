@@ -1,27 +1,36 @@
 "use client";
 
-import React, { useState } from "react";
-import Link from "next/link";
+import React, { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { forgotPassword, resetPassword } from "@/lib/api";
 import { getErrorMessage } from "@/lib/api/client";
 
-export default function ResetPassword() {
-  const [step, setStep] = useState<"request" | "reset">("request");
-  const [email, setEmail] = useState("");
-  const [token, setToken] = useState("");
+function ResetPasswordForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tokenFromUrl = searchParams.get("token");
+  const emailFromUrl = searchParams.get("email");
+
+  // Arriving from the reset email means the link already carries the email
+  // and token, so we skip straight to choosing a new password instead of
+  // asking the customer to copy a code in by hand.
+  const [step, setStep] = useState<"request" | "sent" | "reset">(
+    tokenFromUrl && emailFromUrl ? "reset" : "request",
+  );
+  const [email, setEmail] = useState(emailFromUrl ?? "");
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleRequestCode = async (e: React.FormEvent) => {
+  const handleRequestLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
       const { message } = await forgotPassword(email);
       toast.success(message);
-      setStep("reset");
+      setStep("sent");
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -31,20 +40,22 @@ export default function ResetPassword() {
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!tokenFromUrl || !emailFromUrl) {
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const { message } = await resetPassword({
-        email,
-        token,
+        email: emailFromUrl,
+        token: tokenFromUrl,
         password,
         password_confirmation: passwordConfirmation,
       });
       toast.success(message);
-      setStep("request");
-      setToken("");
-      setPassword("");
-      setPasswordConfirmation("");
+      router.push("/login");
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -59,14 +70,16 @@ export default function ResetPassword() {
         <div className="mb-10">
           <h1 className="text-3xl font-semibold mb-3">Reset your password</h1>
           <p className="text-sm text-gray-500 leading-relaxed">
-            {step === "request"
-              ? "Enter the email address associated with your account. We'll send you a code to reset your password."
-              : "Enter the code we sent to your email along with your new password."}
+            {step === "request" &&
+              "Enter the email address associated with your account. We'll send you a link to reset your password."}
+            {step === "sent" &&
+              "Check your email for a link to reset your password."}
+            {step === "reset" && "Enter your new password below."}
           </p>
         </div>
 
-        {step === "request" ? (
-          <form onSubmit={handleRequestCode} className="space-y-8">
+        {step === "request" && (
+          <form onSubmit={handleRequestLink} className="space-y-8">
             <div className="relative">
               <input
                 id="email"
@@ -105,19 +118,13 @@ export default function ResetPassword() {
                          hover:bg-white hover:text-black hover:border hover:border-black
                          transition duration-300 cursor-pointer disabled:opacity-50"
             >
-              {isLoading ? "Sending..." : "Send reset code"}
+              {isLoading ? "Sending..." : "Send reset link"}
             </button>
           </form>
-        ) : (
+        )}
+
+        {step === "reset" && (
           <form onSubmit={handleReset} className="space-y-6">
-            <input
-              type="text"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              required
-              placeholder="Reset code"
-              className="w-full bg-zinc-100 px-3 py-2.5 text-sm outline-none focus:bg-zinc-200 transition-colors"
-            />
             <input
               type="password"
               value={password}
@@ -144,24 +151,17 @@ export default function ResetPassword() {
             >
               {isLoading ? "Resetting..." : "Reset password"}
             </button>
-
-            <button
-              type="button"
-              onClick={() => setStep("request")}
-              className="text-xs text-gray-500 underline"
-            >
-              Use a different email
-            </button>
           </form>
         )}
-
-        {/* FOOTER */}
-        <div className="mt-8">
-          <Link href="/login" className="text-sm text-gray-500 hover:text-black underline">
-            ← Back to login
-          </Link>
-        </div>
       </div>
     </div>
+  );
+}
+
+export default function ResetPassword() {
+  return (
+    <Suspense fallback={null}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
