@@ -333,7 +333,7 @@ export default function ProductDetail() {
               {openSection === "sizechart" && product.sizechart && (
                 <div className="animate-fade-in text-sm">
                   <div
-                    className="prose prose-sm max-w-none"
+                    className="prose prose-sm max-w-none [&_p]:mb-2 [&_ul]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mb-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_table]:w-full [&_table]:table-fixed [&_table]:border-collapse [&_table]:overflow-hidden [&_th]:border [&_th]:border-gray-300 [&_th]:bg-gray-100 [&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_td]:border [&_td]:border-gray-300 [&_td]:px-3 [&_td]:py-2"
                     dangerouslySetInnerHTML={{ __html: product.sizechart }}
                   />
                 </div>
