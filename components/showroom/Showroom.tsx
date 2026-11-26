@@ -9,21 +9,6 @@ import LookPanel, { lookTitle } from "./LookPanel";
 /** Screens where page scrolling turns the carousel; smaller ones drag it. */
 const SCROLL_DRIVEN_QUERY = "(min-width: 1024px)";
 
-/**
- * How strongly the carousel slows down as each look comes to the front, so
- * the looks can be seen one by one: 0 turns evenly, 1 stops at each look.
- * Kept well below 1, so scrolling always turns it and never feels stuck.
- */
-const SETTLE = 0.45;
-
-/** Scroll position (looks scrolled past, fractional) -> carousel position. */
-function easedPosition(scrolled: number): number {
-  const whole = Math.floor(scrolled);
-  const part = scrolled - whole;
-  const eased = part * part * (3 - 2 * part);
-  return whole + part + (eased - part) * SETTLE;
-}
-
 /** Whether the screen is wide enough for the carousel to follow the scroll. */
 function useScrollDrivenScreen(): boolean {
   const [matches, setMatches] = useState(false);
@@ -119,7 +104,7 @@ export default function Showroom({
 
     const update = () => {
       frame = 0;
-      const position = easedPosition(readScroll());
+      const position = readScroll();
       positionRef.current = position;
       setFrontIndex(Math.round(position));
       roomRef.current?.follow(position);
