@@ -19,6 +19,7 @@ import {
 } from "@/lib/api";
 import { getErrorMessage } from "@/lib/api/client";
 import { MembershipProfile, ShippingArea, User, UserAddress } from "@/lib/api/types";
+import { useBodyScrollLock } from "@/lib/hooks/useBodyScrollLock";
 
 const emptyAddressForm = {
   receiver_name: "",
@@ -190,12 +191,7 @@ export default function Profile({
     }
   };
 
-  useEffect(() => {
-    document.body.style.overflow = showAddressForm ? "hidden" : "auto";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, [showAddressForm]);
+  useBodyScrollLock(showAddressForm);
 
   const closeAddressForm = () => {
     setShowAddressForm(false);
@@ -317,7 +313,7 @@ export default function Profile({
                     {addr.receiver_name} ({addr.phone_number})
                   </p>
                   {addr.is_primary && (
-                    <span className="text-[10px] tracking-wide font-medium px-1.5 py-0.5 bg-black text-white">
+                    <span className="text-[0.625rem] tracking-wide font-medium px-1.5 py-0.5 bg-black text-white">
                       PRIMARY
                     </span>
                   )}
@@ -363,7 +359,7 @@ export default function Profile({
                   aria-label="Close"
                   className="text-zinc-400 hover:text-black transition-colors cursor-pointer"
                 >
-                  <X size={18} />
+                  <X size="1.125rem" />
                 </button>
               </div>
 

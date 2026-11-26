@@ -63,7 +63,7 @@ function VoucherCard({ voucher }: { voucher: UserVoucher }) {
       </div>
 
       <span
-        className={`shrink-0 text-[10px] tracking-wide font-medium px-2 py-1 ${STATUS_STYLES[status]}`}
+        className={`shrink-0 text-[0.625rem] tracking-wide font-medium px-2 py-1 ${STATUS_STYLES[status]}`}
       >
         {status.toUpperCase()}
       </span>
@@ -96,7 +96,7 @@ export default function Voucher({
 
       {!loading && !error && vouchers.length === 0 && (
         <div className="flex flex-col items-center gap-3 text-gray-500 py-16">
-          <Ticket size={28} className="text-gray-300" />
+          <Ticket size="1.75rem" className="text-gray-300" />
           <p className="text-sm">You don&apos;t have any vouchers yet.</p>
         </div>
       )}

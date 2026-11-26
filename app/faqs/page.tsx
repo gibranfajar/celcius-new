@@ -71,9 +71,9 @@ export default function Faqs() {
                       {faq.question}
                     </span>
                     {isOpen ? (
-                      <Minus size={18} className="shrink-0" />
+                      <Minus size="1.125rem" className="shrink-0" />
                     ) : (
-                      <Plus size={18} className="shrink-0" />
+                      <Plus size="1.125rem" className="shrink-0" />
                     )}
                   </button>
 

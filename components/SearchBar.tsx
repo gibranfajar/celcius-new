@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useBodyScrollLock } from "@/lib/hooks/useBodyScrollLock";
 
 export default function SearchBar({
   isOpen,
@@ -17,13 +18,7 @@ export default function SearchBar({
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, [isOpen]);
+  useBodyScrollLock(isOpen);
 
   if (!mounted) return null; // cegah hydration error
 

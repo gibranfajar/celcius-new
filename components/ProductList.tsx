@@ -60,7 +60,7 @@ export default function ProductList({
                 />
 
                 {hasDiscount && (
-                  <span className="absolute top-2 left-2 bg-black text-white text-[10px] tracking-wide font-semibold px-2 py-1">
+                  <span className="absolute top-2 left-2 bg-black text-white text-[0.625rem] tracking-wide font-semibold px-2 py-1">
                     {item.discount_type === "percent"
                       ? `-${item.discount_value}%`
                       : "SALE"}
@@ -68,7 +68,7 @@ export default function ProductList({
                 )}
 
                 {item.variants && item.variants.length > 1 && (
-                  <span className="absolute bottom-2 right-2 bg-white/90 text-black text-[10px] font-semibold px-1.5 py-0.5">
+                  <span className="absolute bottom-2 right-2 bg-white/90 text-black text-[0.625rem] font-semibold px-1.5 py-0.5">
                     +{item.variants.length}
                   </span>
                 )}
@@ -100,7 +100,7 @@ export default function ProductList({
         })
       ) : (
         <div className="col-span-full flex flex-col items-center gap-3 text-center py-20 text-gray-500">
-          <PackageSearch size={28} className="text-gray-300" />
+          <PackageSearch size="1.75rem" className="text-gray-300" />
           <div>
             <p className="text-sm font-medium text-gray-700">
               No products found.

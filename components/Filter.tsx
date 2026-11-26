@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getCategories } from "@/lib/api";
 import { Category } from "@/lib/api/types";
+import { useBodyScrollLock } from "@/lib/hooks/useBodyScrollLock";
 
 type FilterProps = {
   isOpen: boolean;
@@ -21,13 +22,7 @@ export default function Filter({ isOpen, setisOpen, gender }: FilterProps) {
       .catch((error) => console.error("Error fetching categories:", error));
   }, []);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, [isOpen]);
+  useBodyScrollLock(isOpen);
 
   const categoriesByGroup = categories.reduce<Record<string, Category[]>>(
     (acc, category) => {
@@ -62,7 +57,7 @@ export default function Filter({ isOpen, setisOpen, gender }: FilterProps) {
       </div>
 
       {/* Scrollable Content */}
-      <div className="h-[calc(100%-56px)] overflow-y-auto p-4">
+      <div className="h-[calc(100%-3.5rem)] overflow-y-auto p-4">
         <ul className="space-y-2 text-xs">
           <li
             onClick={() => goTo(`/products/${gender}/list`)}

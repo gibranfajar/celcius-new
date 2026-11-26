@@ -15,7 +15,7 @@ function NewsArticle({ item }: { item: News }) {
   return (
     <article>
       <div className="max-w-2xl mx-auto mb-8 text-center">
-        <p className="text-[11px] tracking-widest text-zinc-400 mb-2 uppercase">
+        <p className="text-[0.6875rem] tracking-widest text-zinc-400 mb-2 uppercase">
           {formatDate(item.created_at)}
         </p>
         <h1 className="text-2xl md:text-3xl font-bold base-font">{item.title}</h1>
@@ -88,7 +88,7 @@ export default function NewsPage() {
           </div>
         ) : news.length === 0 ? (
           <div className="flex flex-col items-center gap-3 text-gray-500 py-16">
-            <Newspaper size={28} className="text-gray-300" />
+            <Newspaper size="1.75rem" className="text-gray-300" />
             <p className="text-sm">No news yet.</p>
           </div>
         ) : (

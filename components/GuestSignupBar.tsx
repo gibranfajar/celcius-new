@@ -31,7 +31,7 @@ export default function GuestSignupBar() {
   };
 
   return (
-    <div className="relative bg-black text-white text-center text-[11px] sm:text-xs tracking-wide py-2.5 px-9 seccond-font">
+    <div className="relative bg-black text-white text-center text-[0.6875rem] sm:text-xs tracking-wide py-2.5 px-9 seccond-font">
       <Link href="/register" className="hover:underline">
         ENJOY 10% OFF YOUR FIRST ORDER — SIGN UP NOW
       </Link>
@@ -40,7 +40,7 @@ export default function GuestSignupBar() {
         aria-label="Close"
         className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white transition-colors cursor-pointer p-1"
       >
-        <X size={14} />
+        <X size="0.875rem" />
       </button>
     </div>
   );

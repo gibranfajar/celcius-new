@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { X } from "lucide-react";
 import { RootState } from "@/redux/store";
+import { useBodyScrollLock } from "@/lib/hooks/useBodyScrollLock";
 
 const POPUP_IMAGE_URL = "https://cdn.aksacode.xyz/promo/popup.jpg";
 const POPUP_KEY = "guest_promo_popup_dismissed";
@@ -17,6 +18,7 @@ const POPUP_KEY = "guest_promo_popup_dismissed";
 export default function GuestSignupPopup() {
   const token = useSelector((state: RootState) => state.auth.token);
   const [visible, setVisible] = useState(false);
+  useBodyScrollLock(visible);
 
   useEffect(() => {
     if (token || sessionStorage.getItem(POPUP_KEY) === "1") return;
@@ -68,7 +70,7 @@ export default function GuestSignupPopup() {
               aria-label="Close"
               className="absolute -top-3 -right-3 bg-white text-black rounded-full p-1.5 shadow-md hover:bg-zinc-100 transition-colors cursor-pointer"
             >
-              <X size={18} />
+              <X size="1.125rem" />
             </button>
           </motion.div>
         </div>

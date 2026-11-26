@@ -41,7 +41,6 @@ export interface ProductImage {
 export interface ProductSize {
   id: number;
   size: string;
-  stock: number;
 }
 
 export interface ProductVariant {
@@ -49,12 +48,10 @@ export interface ProductVariant {
   name: string;
   slug: string;
   color: {
-    id: number;
     name: string;
-    code: string;
+    code: string | null;
   };
   thumbnail_url: string;
-  total_stock: number;
   images: ProductImage[];
   sizes: ProductSize[];
 }
@@ -92,7 +89,6 @@ export interface Product {
   discount_value: number | null;
   final_price: number;
   thumbnail_url: string;
-  total_stock: number;
   description?: string;
   sizechart?: string;
   weight?: number;
@@ -109,11 +105,41 @@ export interface Banner {
   title: string;
   image_url: string;
   page: BannerPage;
-  position: "top" | "bottom";
   display: "desktop" | "tablet" | "mobile" | null;
   sort_order: number;
   collection?: Collection | null;
   lookbook?: Lookbook | null;
+}
+
+/** A product worn in a 3D showroom look, in the color worn. */
+export interface LookItem {
+  product: Pick<
+    Product,
+    | "id"
+    | "name"
+    | "slug"
+    | "article"
+    | "type"
+    | "price"
+    | "discount_type"
+    | "discount_value"
+    | "final_price"
+    | "categories"
+  >;
+  variant: ProductVariant;
+}
+
+/** One model of the 3D showroom: a full-body cut-out and what it wears. */
+export interface Look {
+  id: number;
+  /**
+   * The collection the look belongs to: its name is the look's title. The
+   * slug is null while the collection is switched off (no page to open).
+   */
+  collection: { id: number; name: string; slug: string | null } | null;
+  /** Transparent full-body cut-out. */
+  image_url: string;
+  items: LookItem[];
 }
 
 export interface LookbookImage {
@@ -247,6 +273,17 @@ export interface UserVoucher {
   expired_at: string | null;
 }
 
+/** A voucher that can be used on the cart, priced against it. */
+export interface VoucherCheck {
+  code: string;
+  discount_type: DiscountType;
+  discount_value: number;
+  max_discount: number | null;
+  min_purchase: number;
+  subtotal: number;
+  discount_amount: number;
+}
+
 export type OrderStatus =
   | "unpaid"
   | "paid"
@@ -297,6 +334,17 @@ export interface OrderHistory {
   created_at: string;
 }
 
+export type FulfillmentMethod = "shipping" | "pickup";
+
+export interface PickupStore {
+  store_code: string;
+  name: string;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  maps_url: string | null;
+}
+
 export interface Order {
   order_id: number;
   order_number: string;
@@ -306,14 +354,17 @@ export interface Order {
   voucher_code: string | null;
   shipping_cost: number;
   grand_total: number;
+  fulfillment_method: FulfillmentMethod;
+  pickup_store: PickupStore | null;
   shipping_receiver_name: string;
   shipping_email: string;
   shipping_phone: string;
-  shipping_address: string;
-  shipping_province: string;
-  shipping_city: string;
-  shipping_district: string;
-  shipping_postal_code: string;
+  /** The delivery address fields are empty on a pickup order. */
+  shipping_address: string | null;
+  shipping_province: string | null;
+  shipping_city: string | null;
+  shipping_district: string | null;
+  shipping_postal_code: string | null;
   canceled_at: string | null;
   canceled_reason: string | null;
   created_at: string;
@@ -426,4 +477,29 @@ export interface MembershipProfile {
 export interface MembershipProfileResponse {
   is_member: boolean;
   data: MembershipProfile | null;
+}
+
+export interface StoreStock {
+  store_code: string;
+  name: string;
+  address: string | null;
+  /** The store's Google Maps link, when the store locator has one. */
+  maps_url: string | null;
+  city: string;
+  province: string;
+  latitude: number | null;
+  longitude: number | null;
+  /** Kilometres from the shopper; null when their location isn't known. */
+  distance_km: number | null;
+  qty: number;
+}
+
+export interface StoreStockResult {
+  /** The province the stores are in; null until one is known or picked. */
+  province: string | null;
+  /** Whether the province came from the shopper's location. */
+  detected: boolean;
+  /** Every province with at least one store that has this size. */
+  provinces: string[];
+  stores: StoreStock[];
 }

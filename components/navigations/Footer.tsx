@@ -58,7 +58,7 @@ export default function Footer() {
 
   return (
     <footer className="seccond-font border-t border-zinc-100 mt-16">
-      <div className="max-w-6xl mx-auto px-6 py-14">
+      <div className="w-full px-4 py-14 md:px-6">
         <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-4">
           <FooterColumn
             title="Shop"
@@ -115,7 +115,7 @@ export default function Footer() {
                 </button>
               </div>
 
-              <label htmlFor="privacy" className="flex items-start gap-2 text-[11px] text-zinc-500 leading-relaxed">
+              <label htmlFor="privacy" className="flex items-start gap-2 text-[0.6875rem] text-zinc-500 leading-relaxed">
                 <input
                   type="checkbox"
                   id="privacy"
@@ -140,7 +140,7 @@ export default function Footer() {
                 aria-label="Facebook"
                 className="text-zinc-500 hover:text-black transition-colors"
               >
-                <Facebook size={16} />
+                <Facebook size="1rem" />
               </a>
               <a
                 href="https://tiktok.com/@celcius_idn"
@@ -149,7 +149,7 @@ export default function Footer() {
                 aria-label="TikTok"
                 className="text-zinc-500 hover:text-black transition-colors"
               >
-                <i className="bi bi-tiktok text-[16px]" />
+                <i className="bi bi-tiktok text-[1rem]" />
               </a>
               <a
                 href="https://instagram.com/celcius_idn"
@@ -158,7 +158,7 @@ export default function Footer() {
                 aria-label="Instagram"
                 className="text-zinc-500 hover:text-black transition-colors"
               >
-                <Instagram size={16} />
+                <Instagram size="1rem" />
               </a>
               <a
                 href="https://www.youtube.com/channel/UCTBavLm_Z1zr_4bxVvRAl1g"
@@ -167,18 +167,18 @@ export default function Footer() {
                 aria-label="YouTube"
                 className="text-zinc-500 hover:text-black transition-colors"
               >
-                <Youtube size={16} />
+                <Youtube size="1rem" />
               </a>
             </div>
           </div>
         </div>
 
         <div className="mt-12 pt-6 border-t border-zinc-100 flex flex-col md:flex-row gap-3 justify-between items-center">
-          <p className="text-[11px] text-zinc-400 text-center md:text-left">
+          <p className="text-[0.6875rem] text-zinc-400 text-center md:text-left">
             Direktorat Jendral Perlindungan Konsumen dan Tertib Niaga Kementerian
             Perdagangan RI 0853-1111-1010
           </p>
-          <p className="text-[11px] text-zinc-400">© Celcius {new Date().getFullYear()}</p>
+          <p className="text-[0.6875rem] text-zinc-400">© Celcius {new Date().getFullYear()}</p>
         </div>
       </div>
     </footer>

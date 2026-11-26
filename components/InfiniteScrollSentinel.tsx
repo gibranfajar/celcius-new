@@ -14,7 +14,7 @@ export default function InfiniteScrollSentinel({
 }) {
   return (
     <div ref={sentinelRef} className="flex justify-center py-8">
-      {loadingMore && <Loader2 className="animate-spin text-zinc-400" size={20} />}
+      {loadingMore && <Loader2 className="animate-spin text-zinc-400" size="1.25rem" />}
       {loadMoreError && (
         <p className="text-xs text-red-500">⚠️ {loadMoreError}</p>
       )}

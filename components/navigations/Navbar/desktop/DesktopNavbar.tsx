@@ -456,7 +456,7 @@ export default function DesktopNavbar() {
             onClick={() => setIsOpenCarts(true)}
           >
             CART
-            <span className="inline-flex min-w-4 justify-center text-[10px] text-zinc-500">
+            <span className="inline-flex min-w-4 justify-center text-[0.625rem] text-zinc-500">
               ({cartItems.length || 0})
             </span>
           </button>

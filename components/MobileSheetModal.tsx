@@ -2,6 +2,7 @@
 
 import { motion, PanInfo, useDragControls } from "framer-motion";
 import { ReactNode } from "react";
+import { useBodyScrollLock } from "@/lib/hooks/useBodyScrollLock";
 
 // Shared "chrome" for every bottom-sheet-style modal: fades the backdrop in,
 // slides the sheet up from the bottom, and lets the handle bar be dragged
@@ -18,6 +19,8 @@ export default function MobileSheetModal({
   className?: string;
 }) {
   const dragControls = useDragControls();
+  // The page behind a sheet stays put while it's open.
+  useBodyScrollLock();
 
   const handleDragEnd = (_: unknown, info: PanInfo) => {
     if (info.offset.y > 100 || info.velocity.y > 600) {
@@ -28,14 +31,14 @@ export default function MobileSheetModal({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       <motion.div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 touch-none bg-black/50"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
       />
 
       <motion.div
-        className={`relative bg-white w-full shadow-lg rounded-t-2xl sm:rounded-lg ${className}`}
+        className={`relative bg-white w-full shadow-lg rounded-t-2xl sm:rounded-lg overscroll-contain ${className}`}
         initial={{ y: "100%" }}
         animate={{ y: 0 }}
         exit={{ y: "100%" }}

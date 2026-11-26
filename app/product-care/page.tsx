@@ -85,7 +85,7 @@ export default function ProductCarePage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12 md:py-16">
-      <h1 className="mb-12 text-center text-[20px] font-bold uppercase tracking-[2px]">
+      <h1 className="mb-12 text-center text-[1.25rem] font-bold uppercase tracking-[0.125rem]">
         THE CELCIUS GUIDE TO
         <br />
         PRODUCT CARE
@@ -181,7 +181,7 @@ export default function ProductCarePage() {
                     }`}
                   >
                     {care.material}
-                    <ChevronRight size={14} aria-hidden />
+                    <ChevronRight size="0.875rem" aria-hidden />
                   </button>
                 </li>
               ))}

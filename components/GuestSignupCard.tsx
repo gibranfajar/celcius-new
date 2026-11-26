@@ -44,7 +44,7 @@ export default function GuestSignupCard() {
             aria-label="Close"
             className="absolute top-2 right-2 text-zinc-400 hover:text-black transition-colors cursor-pointer"
           >
-            <X size={16} />
+            <X size="1rem" />
           </button>
           <p className="text-sm font-medium pr-5 mb-3">
             SIGN UP FOR 10% OFF YOUR FIRST ORDER
