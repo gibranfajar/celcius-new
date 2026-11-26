@@ -6,35 +6,46 @@ import type { Look } from "@/lib/api/types";
 import formatProductName from "@/lib/formatProductName";
 import LookPanel, { lookTitle } from "./LookPanel";
 
-/**
- * How much page scrolling turns the carousel by one look: set as the
- * --per-look CSS variable below, shorter on a phone.
- */
+/** Screens where page scrolling turns the carousel; smaller ones drag it. */
+const SCROLL_DRIVEN_QUERY = "(min-width: 1024px)";
 
 /**
- * Of the scroll between two looks, the share spent turning; the rest keeps
- * a look in front for a moment, so each one can be seen. Kept short, so
- * scrolling never feels stuck.
+ * How strongly the carousel slows down as each look comes to the front, so
+ * the looks can be seen one by one: 0 turns evenly, 1 stops at each look.
+ * Kept well below 1, so scrolling always turns it and never feels stuck.
  */
-const TURN_SHARE = 0.8;
+const SETTLE = 0.45;
 
 /** Scroll position (looks scrolled past, fractional) -> carousel position. */
 function easedPosition(scrolled: number): number {
   const whole = Math.floor(scrolled);
   const part = scrolled - whole;
-  const start = (1 - TURN_SHARE) / 2;
-  const t = Math.min(Math.max((part - start) / TURN_SHARE, 0), 1);
-  return whole + t * t * (3 - 2 * t);
+  const eased = part * part * (3 - 2 * part);
+  return whole + part + (eased - part) * SETTLE;
+}
+
+/** Whether the screen is wide enough for the carousel to follow the scroll. */
+function useScrollDrivenScreen(): boolean {
+  const [matches, setMatches] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia(SCROLL_DRIVEN_QUERY);
+    const update = () => setMatches(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+  return matches;
 }
 
 /**
  * The home page header: the looks float in a 3D carousel, switch to a grid,
  * and open the products a look wears when clicked.
  *
- * Scrolling the page turns the carousel through the looks in their sort
- * order while the showroom stays pinned on screen; once the last look is in
- * front, the page carries on scrolling (and back up again the same way).
- * Dragging or swiping sideways turns it as well.
+ * On a desktop, scrolling the page turns the carousel through the looks in
+ * their sort order while the showroom stays pinned on screen; once the last
+ * look is in front, the page carries on scrolling (and back up again the
+ * same way). Dragging sideways turns it as well, and on a phone or tablet
+ * that is the only way: the page scrolls past the showroom as usual.
  */
 export default function Showroom({
   looks,
@@ -56,7 +67,10 @@ export default function Showroom({
   const positionRef = useRef(0);
 
   const count = looks.length;
-  const scrollDriven = layout === "showcase" && count > 1;
+  const isShowcase = layout === "showcase" && count > 1;
+  const scrollDriven = useScrollDrivenScreen() && isShowcase;
+  const scrollDrivenRef = useRef(scrollDriven);
+  scrollDrivenRef.current = scrollDriven;
 
   // The scene is rebuilt only when the set of images changes.
   const images = useMemo(() => looks.map((look) => look.image_url), [looks]);
@@ -135,7 +149,9 @@ export default function Showroom({
   useEffect(() => {
     roomRef.current?.setInteractive(selected === null);
     roomRef.current?.setPanelOpen(selected !== null);
-    if (selected === null) roomRef.current?.follow(positionRef.current);
+    if (selected === null && scrollDrivenRef.current) {
+      roomRef.current?.follow(positionRef.current);
+    }
   }, [selected]);
 
   if (count === 0) return null;
@@ -163,9 +179,9 @@ export default function Showroom({
   return (
     <div
       ref={wrapperRef}
-      className="relative w-full [--per-look:40svh] md:[--per-look:50svh]"
+      className="relative w-full [--per-look:50svh] max-lg:!h-auto"
       style={
-        scrollDriven
+        isShowcase
           ? {
               height: `calc(max(100svh - var(--nav-h, 4rem), 30rem) + ${count - 1} * var(--per-look))`,
             }
@@ -213,7 +229,7 @@ export default function Showroom({
               {title}
             </h1>
           </div>
-          <p className="seccond-font hidden max-w-[16rem] text-right text-xs leading-5 text-zinc-500 sm:block">
+          <p className="seccond-font hidden max-w-[16rem] text-right text-xs leading-5 text-zinc-500 lg:block">
             {isGrid
               ? `All ${count} looks, side by side.`
               : "Scroll to turn through the looks."}
@@ -225,7 +241,7 @@ export default function Showroom({
         {/* Which look is in front, while scrolling through them. Bottom
             left, out of the way of the looks turning past; the toggle has
             the bottom centre. */}
-        {scrollDriven && (
+        {isShowcase && (
           <div className="seccond-font pointer-events-none absolute bottom-8 left-8 z-10 hidden w-[17rem] rounded-2xl bg-white/75 px-4 py-3 shadow-[0_8px_30px_rgba(20,20,30,0.10)] backdrop-blur lg:block">
             <div className="flex items-center gap-3">
               <p className="shrink-0 text-xs tabular-nums tracking-[0.2em] text-zinc-900">
@@ -249,7 +265,7 @@ export default function Showroom({
           <p className="seccond-font rounded-full bg-white/60 px-3 py-1 text-xs text-zinc-600 backdrop-blur lg:hidden">
             {isGrid
               ? "Tap a look to shop it."
-              : `${frontIndex + 1} / ${count} · scroll or swipe · tap to shop`}
+              : "Swipe to turn · tap a look to shop it"}
           </p>
           {count > 1 && (
             <div className="seccond-font flex items-center gap-4 rounded-full bg-white/70 px-5 py-3 shadow-[0_8px_30px_rgba(20,20,30,0.12)] backdrop-blur">

@@ -110,9 +110,15 @@ export function createShowroom(
    * else - a drag, a click, the arrow keys - turns the carousel.
    */
   let followTarget: number | null = null;
+  /** How fast the carousel is turning towards followTarget (per second). */
+  let followSpeed = 0;
   let lastFrameTime = 0;
-  /** How quickly the carousel catches up with the scroll (per second). */
-  const FOLLOW_RATE = 6;
+  /**
+   * Stiffness of the spring pulling the carousel to followTarget. The spring
+   * is critically damped: it speeds up and slows down gradually instead of
+   * jumping at each notch of a mouse wheel, and never overshoots.
+   */
+  const FOLLOW_STIFFNESS = 7;
   const cam = { v: initial === "grid" ? 1 : 0 };
   const shift = { v: 0 }; // world units the camera slides sideways
   let interactive = true;
@@ -154,8 +160,16 @@ export function createShowroom(
     lastFrameTime = time;
     if (followTarget !== null && !dragging) {
       const gap = followTarget - carousel.rot;
-      carousel.rot =
-        Math.abs(gap) < 0.0005 ? followTarget : carousel.rot + gap * (1 - Math.exp(-dt * FOLLOW_RATE));
+      if (Math.abs(gap) < 0.0002 && Math.abs(followSpeed) < 0.002) {
+        carousel.rot = followTarget;
+        followSpeed = 0;
+      } else {
+        const k = FOLLOW_STIFFNESS;
+        followSpeed += (k * k * gap - 2 * k * followSpeed) * dt;
+        carousel.rot += followSpeed * dt;
+      }
+    } else {
+      followSpeed = 0;
     }
 
     for (let i = 0; i < slots.length; i++) {
