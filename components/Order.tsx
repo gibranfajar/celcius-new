@@ -3,7 +3,7 @@ import { formatDate } from "@/lib/formatDate";
 import formatProductName from "@/lib/formatProductName";
 import { formatToIdr } from "@/lib/formatToIdr";
 import getStatusStyle from "@/lib/getStatusStyle";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import MobileSheetModal from "@/components/MobileSheetModal";
@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/SkeletonImage";
 import {
   X,
   Truck,
+  Store,
   CreditCard,
   PackageOpen,
   History,
@@ -26,6 +27,8 @@ import { getErrorMessage } from "@/lib/api/client";
 import { Order as OrderType } from "@/lib/api/types";
 import { useInfiniteList } from "@/lib/hooks/useInfiniteList";
 import InfiniteScrollSentinel from "@/components/InfiniteScrollSentinel";
+import StoreMapCard from "@/components/StoreMapCard";
+import { useBodyScrollLock } from "@/lib/hooks/useBodyScrollLock";
 
 // `onSettled` lets callers refresh their order list once a payment actually
 // goes through - without it the UI kept showing "unpaid"/"PAY NOW" after a
@@ -73,7 +76,7 @@ function StatusBadge({ status }: { status: string }) {
   const style = getStatusStyle(status);
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 text-[11px] font-medium tracking-wide border ${style.color} border-current/30 bg-current/5`}
+      className={`inline-flex items-center px-2 py-0.5 text-[0.6875rem] font-medium tracking-wide border ${style.color} border-current/30 bg-current/5`}
     >
       {style.label}
     </span>
@@ -92,12 +95,7 @@ function OrderDetailModal({
   const [confirming, setConfirming] = useState(false);
   const [paying, setPaying] = useState(false);
 
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, []);
+  useBodyScrollLock();
 
   const handleConfirm = async () => {
     setConfirming(true);
@@ -137,7 +135,7 @@ function OrderDetailModal({
         <div className="flex items-center justify-between px-4 md:px-5 py-3.5 border-b border-zinc-100 shrink-0">
           <div>
             <h2 className="text-sm font-semibold">{order.order_number}</h2>
-            <p className="text-[11px] text-zinc-400">
+            <p className="text-[0.6875rem] text-zinc-400">
               {formatDate(order.created_at)}
             </p>
           </div>
@@ -146,59 +144,84 @@ function OrderDetailModal({
             aria-label="Close"
             className="text-zinc-400 hover:text-black transition-colors cursor-pointer"
           >
-            <X size={18} />
+            <X size="1.125rem" />
           </button>
         </div>
 
         <div className="p-4 md:p-5 space-y-5 overflow-y-auto flex-1 min-h-0">
           <StatusBadge status={order.status} />
 
-          {/* SHIPPING INFO */}
-          <div className="border border-zinc-200 p-3.5 text-xs space-y-1">
-            <h3 className="font-semibold mb-1.5 flex items-center gap-1.5">
-              <Truck size={13} /> Shipping Information
-            </h3>
-            <p>
-              <span className="font-medium">Name:</span>{" "}
-              {order.shipping_receiver_name}
-            </p>
-            <p>
-              <span className="font-medium">Phone:</span> {order.shipping_phone}
-            </p>
-            <p>
-              <span className="font-medium">Address:</span>{" "}
-              {order.shipping_address}
-            </p>
-            <p>
-              <span className="font-medium">Region:</span>{" "}
-              {[
-                order.shipping_district,
-                order.shipping_city,
-                order.shipping_province,
-              ]
-                .filter(Boolean)
-                .join(", ") || "-"}
-            </p>
-            <p>
-              <span className="font-medium">Postal Code:</span>{" "}
-              {order.shipping_postal_code}
-            </p>
-            {order.shipment && (
-              <>
-                <p>
-                  <span className="font-medium">Courier:</span>{" "}
-                  {order.shipment.courier_code} -{" "}
-                  {order.shipment.courier_service}
-                </p>
-                {order.shipment.waybill_number && (
+          {/* SHIPPING / PICKUP INFO */}
+          {order.fulfillment_method === "pickup" && order.pickup_store ? (
+            <div className="space-y-2 text-xs">
+              <h3 className="flex items-center gap-1.5 font-semibold">
+                <Store size="0.8125rem" /> Store Pickup
+              </h3>
+              <p className="text-zinc-600">
+                Picked up by{" "}
+                <span className="font-medium text-black">
+                  {order.shipping_receiver_name}
+                </span>{" "}
+                · {order.shipping_phone}
+              </p>
+              <StoreMapCard
+                code={order.pickup_store.store_code}
+                store={{
+                  name: order.pickup_store.name,
+                  address: order.pickup_store.address,
+                  latitude: order.pickup_store.latitude,
+                  longitude: order.pickup_store.longitude,
+                  mapsUrl: order.pickup_store.maps_url,
+                }}
+              />
+            </div>
+          ) : (
+            <div className="border border-zinc-200 p-3.5 text-xs space-y-1">
+              <h3 className="font-semibold mb-1.5 flex items-center gap-1.5">
+                <Truck size="0.8125rem" /> Shipping Information
+              </h3>
+              <p>
+                <span className="font-medium">Name:</span>{" "}
+                {order.shipping_receiver_name}
+              </p>
+              <p>
+                <span className="font-medium">Phone:</span> {order.shipping_phone}
+              </p>
+              <p>
+                <span className="font-medium">Address:</span>{" "}
+                {order.shipping_address}
+              </p>
+              <p>
+                <span className="font-medium">Region:</span>{" "}
+                {[
+                  order.shipping_district,
+                  order.shipping_city,
+                  order.shipping_province,
+                ]
+                  .filter(Boolean)
+                  .join(", ") || "-"}
+              </p>
+              <p>
+                <span className="font-medium">Postal Code:</span>{" "}
+                {order.shipping_postal_code}
+              </p>
+              {order.shipment && (
+                <>
                   <p>
-                    <span className="font-medium">Waybill:</span>{" "}
-                    {order.shipment.waybill_number}
+                    <span className="font-medium">Courier:</span>{" "}
+                    {order.shipment.courier_code} -{" "}
+                    {order.shipment.courier_service}
                   </p>
-                )}
-              </>
-            )}
-          </div>
+                  {order.shipment.waybill_number && (
+                    <p>
+                      <span className="font-medium">Waybill:</span>{" "}
+                      {order.shipment.waybill_number}
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
 
           {/* PRODUCTS */}
           <div className="space-y-2.5">
@@ -228,7 +251,7 @@ function OrderDetailModal({
           {order.payment && (
             <div className="text-xs space-y-1">
               <h3 className="font-semibold mb-1.5 flex items-center gap-1.5">
-                <CreditCard size={13} /> Payment Details
+                <CreditCard size="0.8125rem" /> Payment Details
               </h3>
               <p>
                 <span className="font-medium">Method:</span>{" "}
@@ -251,7 +274,7 @@ function OrderDetailModal({
           {timeline.length > 0 && (
             <div className="text-xs space-y-2">
               <h3 className="font-semibold flex items-center gap-1.5">
-                <History size={13} /> Order History
+                <History size="0.8125rem" /> Order History
               </h3>
               <div className="overflow-x-auto -mx-4 px-4 md:-mx-5 md:px-5">
                 <div className="flex items-start w-max min-w-full">
@@ -272,7 +295,7 @@ function OrderDetailModal({
                                 : "bg-white border-zinc-300 text-zinc-400"
                             }`}
                           >
-                            <Icon size={13} />
+                            <Icon size="0.8125rem" />
                           </span>
                           <p
                             className={`font-medium capitalize leading-tight ${
@@ -281,7 +304,7 @@ function OrderDetailModal({
                           >
                             {history.status.replace(/_/g, " ")}
                           </p>
-                          <p className="text-[10px] text-zinc-400 leading-tight">
+                          <p className="text-[0.625rem] text-zinc-400 leading-tight">
                             {formatDateTime(history.created_at)}
                           </p>
                         </div>
@@ -391,7 +414,7 @@ export default function Order() {
 
       {orders.length === 0 && (
         <div className="flex flex-col items-center gap-3 text-gray-500 py-16">
-          <PackageOpen size={28} className="text-gray-300" />
+          <PackageOpen size="1.75rem" className="text-gray-300" />
           <p className="text-sm">You have no orders yet.</p>
         </div>
       )}

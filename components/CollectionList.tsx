@@ -27,7 +27,7 @@ export default function CollectionList({
   if (!data || data.length === 0) {
     return (
       <div className="col-span-full flex flex-col items-center gap-3 text-center py-20 text-gray-500">
-        <LayoutGrid size={28} className="text-gray-300" />
+        <LayoutGrid size="1.75rem" className="text-gray-300" />
         <p className="text-sm font-medium text-gray-700">No collections found.</p>
       </div>
     );

@@ -42,7 +42,7 @@ function PromoDetailModal({
           aria-label="Close"
           className="text-zinc-400 hover:text-black transition-colors cursor-pointer"
         >
-          <X size={18} />
+          <X size="1.125rem" />
         </button>
       </div>
 
@@ -62,7 +62,7 @@ function PromoDetailModal({
 
         <div className="p-4 md:p-5 space-y-3 text-xs">
           {promo.brand && (
-            <span className="inline-block text-[10px] tracking-wide font-medium px-1.5 py-0.5 bg-black text-white">
+            <span className="inline-block text-[0.625rem] tracking-wide font-medium px-1.5 py-0.5 bg-black text-white">
               {promo.brand}
             </span>
           )}
@@ -117,7 +117,7 @@ function PromoCard({
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <p className="font-medium text-sm">{promo.promoTitle}</p>
           {promo.brand && (
-            <span className="text-[10px] tracking-wide font-medium px-1.5 py-0.5 bg-black text-white shrink-0">
+            <span className="text-[0.625rem] tracking-wide font-medium px-1.5 py-0.5 bg-black text-white shrink-0">
               {promo.brand}
             </span>
           )}
@@ -171,7 +171,7 @@ export default function Promo() {
 
       {!loading && !error && promos.length === 0 && (
         <div className="flex flex-col items-center gap-3 text-gray-500 py-16">
-          <Tag size={28} className="text-gray-300" />
+          <Tag size="1.75rem" className="text-gray-300" />
           <p className="text-sm">
             You don&apos;t have any active promotions right now.
           </p>

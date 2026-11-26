@@ -27,13 +27,13 @@ function TierCard({ tier }: { tier: MembershipTierBenefit }) {
           <p className="font-medium text-sm flex items-center gap-1.5">
             {tier.tier}
             {isActive && (
-              <span className="text-[10px] tracking-wide font-medium px-1.5 py-0.5 bg-black text-white">
+              <span className="text-[0.625rem] tracking-wide font-medium px-1.5 py-0.5 bg-black text-white">
                 CURRENT
               </span>
             )}
           </p>
           {!isActive && (
-            <span className="text-[10px] text-zinc-400">Locked</span>
+            <span className="text-[0.625rem] text-zinc-400">Locked</span>
           )}
         </div>
 
@@ -73,7 +73,7 @@ export default function MembershipTier({
 
       {!loading && tierData.length === 0 && (
         <div className="flex flex-col items-center gap-3 text-gray-500 py-16">
-          <Award size={28} className="text-gray-300" />
+          <Award size="1.75rem" className="text-gray-300" />
           <p className="text-sm">
             You&apos;re not enrolled in the membership program yet.
           </p>

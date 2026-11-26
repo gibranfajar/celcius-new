@@ -6,34 +6,39 @@ import { useEffect, useState } from "react";
 import formatProductName from "@/lib/formatProductName";
 import { formatToIdr } from "@/lib/formatToIdr";
 import { formatMiniText } from "@/lib/formatMiniText";
-import { getProducts, getBanners, getLookbooks } from "@/lib/api";
-import { Banner, Lookbook, Product } from "@/lib/api/types";
+import { getProducts, getBanners, getLookbooks, getLooks } from "@/lib/api";
+import { Banner, Look, Lookbook, Product } from "@/lib/api/types";
 import SkeletonImage, { Skeleton } from "@/components/SkeletonImage";
 import BannerCarousel from "@/components/BannerCarousel";
+import Showroom from "@/components/showroom/Showroom";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
-  const [bannerTop, setBannerTop] = useState<Banner[]>([]);
-  const [bannerBottom, setBannerBottom] = useState<Banner[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [looks, setLooks] = useState<Look[]>([]);
   const [gridLookbooks, setGridLookbooks] = useState<Lookbook[]>([]);
 
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
       try {
-        const [menRes, womenRes, banners, lookbooksRes] = await Promise.all([
+        const [menRes, bannersRes, lookbooksRes, looksRes] = await Promise.all([
           getProducts({ type: "men" }),
-          getProducts({ type: "women" }),
           getBanners({ page: "men" }),
           getLookbooks(),
+          // The showroom is a bonus: the page still loads without it.
+          getLooks().catch((error) => {
+            console.error("Error fetching looks:", error);
+            return [] as Look[];
+          }),
         ]);
 
         // Home grid: 4 of each so both genders are represented, not just
         // whichever happened to be newest overall.
         setProducts([...menRes.data.slice(0, 8)]);
-        setBannerTop(banners.filter((item) => item.position === "top"));
-        setBannerBottom(banners.filter((item) => item.position === "bottom"));
+        setBanners(bannersRes);
+        setLooks(looksRes);
 
         // Home grid: the 2 most recently published "men" lookbooks plus the
         // most recently published "women" one - 3 tiles total. `lookbooksRes`
@@ -58,7 +63,7 @@ export default function Home() {
   if (isLoading) {
     return (
       <div>
-        <SkeletonImage className="w-full aspect-4/5 md:aspect-video" />
+        <SkeletonImage className="h-[calc(100svh-var(--nav-h,4rem))] min-h-[30rem] w-full" />
 
         <div className="grid md:grid-cols-3 items-start p-6 gap-6">
           {[0, 1, 2].map((i) => (
@@ -89,10 +94,8 @@ export default function Home() {
 
   return (
     <>
-      {/* Banner Atas */}
-      <div className="space-y-2">
-        <BannerCarousel banners={bannerTop} showLookbookLink />
-      </div>
+      {/* 3D showroom */}
+      <Showroom looks={looks} />
 
       {/* Grid Lookbook */}
       <div className="grid md:grid-cols-3 items-start p-6 gap-6 base-font">
@@ -128,9 +131,9 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Banner Bawah */}
+      {/* Banner */}
       <div className="space-y-2">
-        <BannerCarousel banners={bannerBottom} showLookbookLink />
+        <BannerCarousel banners={banners} showLookbookLink />
       </div>
 
       {/* product grid */}
@@ -179,7 +182,7 @@ export default function Home() {
                       )}
 
                       {item.variants && item.variants.length > 1 && (
-                        <span className="absolute bottom-2 right-2 bg-white/90 text-black text-[10px] font-semibold px-1.5 py-0.5">
+                        <span className="absolute bottom-2 right-2 bg-white/90 text-black text-[0.625rem] font-semibold px-1.5 py-0.5">
                           +{item.variants.length}
                         </span>
                       )}

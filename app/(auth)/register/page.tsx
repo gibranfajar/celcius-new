@@ -179,7 +179,7 @@ export default function Register() {
                 onClick={() => setShowPassword((s) => !s)}
                 className="absolute right-1 top-1/2 -translate-y-1/2 p-2"
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showPassword ? <EyeOff size="1.125rem" /> : <Eye size="1.125rem" />}
               </button>
             </div>
 
@@ -245,15 +245,15 @@ export default function Register() {
           <h2 className="text-2xl font-semibold mb-3">Register make you special</h2>
           <ul className="space-y-3 text-sm">
             <li className="flex items-center gap-2">
-              <Gift size={16} />
+              <Gift size="1rem" />
               Exclusive gifts
             </li>
             <li className="flex items-center gap-2">
-              <CalendarDays size={16} />
+              <CalendarDays size="1rem" />
               Special event invites
             </li>
             <li className="flex items-center gap-2">
-              <Percent size={15} />
+              <Percent size="0.9375rem" />
               Sale previews
             </li>
           </ul>

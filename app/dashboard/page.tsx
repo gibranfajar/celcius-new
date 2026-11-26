@@ -128,7 +128,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="p-4 md:px-8 md:py-8">
-        <div className="grid md:grid-cols-[240px_1fr] gap-8 max-w-5xl mx-auto">
+        <div className="grid md:grid-cols-[15rem_1fr] gap-8 max-w-5xl mx-auto">
           <div className="space-y-4">
             <Skeleton className="h-16 w-16 rounded-full" />
             <Skeleton className="h-4 w-2/3" />
@@ -151,7 +151,7 @@ export default function Dashboard() {
 
   return (
     <div className="p-4 md:px-8 md:py-8 seccond-font">
-      <div className="grid md:grid-cols-[240px_1fr] gap-8 max-w-5xl mx-auto">
+      <div className="grid md:grid-cols-[15rem_1fr] gap-8 max-w-5xl mx-auto">
         {/* Sidebar */}
         <div className="min-w-0">
           <div className="flex items-center gap-3 mb-6">
@@ -176,7 +176,7 @@ export default function Dashboard() {
                     : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
                 }`}
               >
-                <Icon size={13} />
+                <Icon size="0.8125rem" />
                 {tabLabel(id, label).toUpperCase()}
               </button>
             ))}
@@ -194,7 +194,7 @@ export default function Dashboard() {
                     : "border-transparent text-zinc-600 hover:bg-zinc-50"
                 }`}
               >
-                <Icon size={15} />
+                <Icon size="0.9375rem" />
                 {tabLabel(id, label)}
               </button>
             ))}
@@ -204,7 +204,7 @@ export default function Dashboard() {
             onClick={handleLogout}
             className="text-sm text-red-600 mt-6 flex items-center gap-2 hover:underline cursor-pointer"
           >
-            <LogOut size={15} />
+            <LogOut size="0.9375rem" />
             LOGOUT
           </button>
         </div>

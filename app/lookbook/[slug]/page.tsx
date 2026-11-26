@@ -70,12 +70,12 @@ export default function LookbookDetail() {
           href="/lookbook"
           className="nav-link inline-flex items-center gap-1 text-xs text-zinc-500 mb-6 w-fit"
         >
-          <ArrowLeft size={13} />
+          <ArrowLeft size="0.8125rem" />
           Back to Lookbook
         </Link> */}
 
         <div className="max-w-4xl mx-auto mb-10 text-center">
-          <p className="text-[11px] tracking-widest text-zinc-400 mb-2 uppercase">
+          <p className="text-[0.6875rem] tracking-widest text-zinc-400 mb-2 uppercase">
             {lookbook.type === "women" ? "Womens" : "Mens"} Lookbook
           </p>
           <h1 className="text-2xl md:text-3xl font-bold base-font">
@@ -108,7 +108,7 @@ export default function LookbookDetail() {
           </div>
         ) : (
           <div className="flex flex-col items-center gap-3 text-gray-500 py-16">
-            <ImageOff size={28} className="text-gray-300" />
+            <ImageOff size="1.75rem" className="text-gray-300" />
             <p className="text-sm">No images found for this lookbook.</p>
           </div>
         )}

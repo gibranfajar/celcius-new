@@ -13,21 +13,19 @@ import { formatToIdr } from "@/lib/formatToIdr";
 export default function WomenHome() {
   const [isLoading, setIsLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
-  const [bannerTop, setBannerTop] = useState<Banner[]>([]);
-  const [bannerBottom, setBannerBottom] = useState<Banner[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
 
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
       try {
-        const [productsRes, banners] = await Promise.all([
+        const [productsRes, bannersRes] = await Promise.all([
           getProducts({ type: "women" }),
           getBanners({ page: "women" }),
         ]);
 
         setProducts(productsRes.data);
-        setBannerTop(banners.filter((item) => item.position === "top"));
-        setBannerBottom(banners.filter((item) => item.position === "bottom"));
+        setBanners(bannersRes);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -45,20 +43,12 @@ export default function WomenHome() {
       {isLoading ? (
         <SkeletonImage className="w-full aspect-9/16 md:aspect-3/1" />
       ) : (
-        <>
-          <div className="mb-1">
-            <BannerCarousel
-              banners={bannerTop}
-              sizeClasses={{ tablet: "aspect-4/3", desktop: "aspect-3/1" }}
-            />
-          </div>
-          <div className="mt-1">
-            <BannerCarousel
-              banners={bannerBottom}
-              sizeClasses={{ tablet: "aspect-4/3", desktop: "aspect-3/1" }}
-            />
-          </div>
-        </>
+        <div className="mb-1">
+          <BannerCarousel
+            banners={banners}
+            sizeClasses={{ tablet: "aspect-4/3", desktop: "aspect-3/1" }}
+          />
+        </div>
       )}
 
       {/* product grid */}
@@ -107,7 +97,7 @@ export default function WomenHome() {
                       )}
 
                       {item.variants && item.variants.length > 1 && (
-                        <span className="absolute bottom-2 right-2 bg-white/90 text-black text-[10px] font-semibold px-1.5 py-0.5">
+                        <span className="absolute bottom-2 right-2 bg-white/90 text-black text-[0.625rem] font-semibold px-1.5 py-0.5">
                           +{item.variants.length}
                         </span>
                       )}

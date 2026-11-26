@@ -29,13 +29,13 @@ function StoreCard({ item }: { item: Location }) {
       <h2 className="font-semibold text-base">{item.store_name}</h2>
 
       <div className="flex items-start gap-2 mt-3 text-sm text-zinc-600">
-        <MapPin size={15} className="mt-0.5 shrink-0 text-zinc-400" />
+        <MapPin size="0.9375rem" className="mt-0.5 shrink-0 text-zinc-400" />
         <p>{item.address}</p>
       </div>
 
       {item.phone_number && (
         <div className="flex items-center gap-2 mt-2 text-sm text-zinc-600">
-          <Phone size={15} className="shrink-0 text-zinc-400" />
+          <Phone size="0.9375rem" className="shrink-0 text-zinc-400" />
           <a href={`tel:${item.phone_number}`} className="nav-link w-fit">
             {item.phone_number}
           </a>
@@ -56,7 +56,7 @@ function StoreCard({ item }: { item: Location }) {
       {item.operational_hours.length > 0 && (
         <div className="mt-5 pt-4 border-t border-zinc-100">
           <div className="flex items-center gap-2 text-xs font-semibold tracking-wide mb-2 text-zinc-500">
-            <Clock size={13} />
+            <Clock size="0.8125rem" />
             OPENING HOURS
           </div>
           <ul className="text-xs space-y-1.5 text-zinc-600">

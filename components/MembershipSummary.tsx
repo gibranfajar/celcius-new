@@ -56,14 +56,14 @@ export default function MembershipSummary({
           )}
           <div>
             <p className="font-medium text-sm flex items-center gap-1.5">
-              <Award size={14} /> {profile.tierInfo.tier_name}
+              <Award size="0.875rem" /> {profile.tierInfo.tier_name}
             </p>
             <p className="text-xs text-zinc-500">{profile.fullName}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-1.5 text-xs text-zinc-500">
-          <Ticket size={14} />
+          <Ticket size="0.875rem" />
           {profile.totalVoucher} voucher{profile.totalVoucher === 1 ? "" : "s"}
         </div>
       </div>

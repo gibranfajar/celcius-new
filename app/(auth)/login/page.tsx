@@ -117,7 +117,7 @@ export default function Login() {
                 aria-pressed={showPassword}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showPassword ? <EyeOff size="1.125rem" /> : <Eye size="1.125rem" />}
               </button>
             </div>
 

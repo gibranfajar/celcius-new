@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { X, Trash2, ShoppingBag } from "lucide-react";
+import { useBodyScrollLock } from "@/lib/hooks/useBodyScrollLock";
 
 export default function CartBar({
   isOpen,
@@ -23,13 +24,7 @@ export default function CartBar({
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, [isOpen]);
+  useBodyScrollLock(isOpen);
 
   if (!mounted) return null; // cegah hydration error
 
@@ -54,7 +49,7 @@ export default function CartBar({
           aria-label="Close cart"
           className="cursor-pointer text-zinc-500 hover:text-black transition-colors"
         >
-          <X size={20} />
+          <X size="1.25rem" />
         </button>
       </div>
 
@@ -62,7 +57,7 @@ export default function CartBar({
       <div className="flex-1 overflow-y-auto p-4 space-y-4 text-sm">
         {cartItems.length === 0 ? (
           <div className="flex flex-col items-center gap-3 text-center py-16">
-            <ShoppingBag size={26} className="text-gray-300" />
+            <ShoppingBag size="1.625rem" className="text-gray-300" />
             <p className="text-gray-500 text-sm">Your cart is empty.</p>
           </div>
         ) : (
@@ -77,6 +72,11 @@ export default function CartBar({
                 <span className="text-xs text-zinc-500">
                   {cart.size} · {formatToIdr(cart.finalPrice)} × {cart.quantity}
                 </span>
+                {cart.storeName && (
+                  <p className="truncate text-xs text-zinc-400">
+                    From {cart.storeName}
+                  </p>
+                )}
               </div>
 
               <button
@@ -86,7 +86,7 @@ export default function CartBar({
                 aria-label="Remove item"
                 className="text-zinc-400 hover:text-red-500 cursor-pointer transition-colors shrink-0"
               >
-                <Trash2 size={16} />
+                <Trash2 size="1rem" />
               </button>
             </div>
           ))

@@ -9,6 +9,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import { fetchAllPages, getCategories, getCollections, getLookbooks } from "@/lib/api";
 import { Category, Collection, Lookbook } from "@/lib/api/types";
+import { useBodyScrollLock } from "@/lib/hooks/useBodyScrollLock";
 
 type Props = {
   isOpen: boolean;
@@ -29,13 +30,7 @@ export default function MobileSidebar({ isOpen, onClose, onOpenSearch }: Props) 
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, [isOpen]);
+  useBodyScrollLock(isOpen);
 
   useEffect(() => {
     getCategories()
@@ -104,7 +99,7 @@ export default function MobileSidebar({ isOpen, onClose, onOpenSearch }: Props) 
     >
       {label}
       <ChevronDown
-        size={16}
+        size="1rem"
         className={`text-zinc-400 transition-transform duration-300 ${
           openMenu === id ? "rotate-180" : ""
         }`}
@@ -126,12 +121,12 @@ export default function MobileSidebar({ isOpen, onClose, onOpenSearch }: Props) 
           aria-label="Close menu"
           className="cursor-pointer text-zinc-500 hover:text-black transition-colors"
         >
-          <X size={20} />
+          <X size="1.25rem" />
         </button>
       </div>
 
       {/* CONTENT */}
-      <div className="h-[calc(100%-56px)] overflow-y-auto px-4 py-2 text-sm">
+      <div className="h-[calc(100%-3.5rem)] overflow-y-auto px-4 py-2 text-sm">
         <div className="divide-y divide-zinc-100">
           {/* MENS */}
           <div>
@@ -244,7 +239,7 @@ export default function MobileSidebar({ isOpen, onClose, onOpenSearch }: Props) 
               }}
               className="nav-link flex items-center gap-2 text-sm font-semibold tracking-wide w-fit cursor-pointer"
             >
-              <Search size={15} />
+              <Search size="0.9375rem" />
               SEARCH
             </button>
           </li>

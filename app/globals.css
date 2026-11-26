@@ -19,6 +19,24 @@
   }
 } */
 
+/*
+ * Desktop scales with the window instead of the browser zoom: the root font
+ * size is a fixed share of the window width, and every size on the site is in
+ * rem, so zooming in or out (or a wider or narrower screen) keeps the page
+ * looking exactly the same, only larger or smaller. The design is drawn at
+ * 1920px wide, where 1rem is 16px; change --design-width to retune it.
+ * Below 1024px (tablets, phones) the browser default stays.
+ */
+:root {
+  --design-width: 1920;
+}
+
+@media (min-width: 1024px) {
+  html {
+    font-size: calc(100vw * 16 / var(--design-width));
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -99,7 +117,7 @@ textarea {
 }
 
 .text-verysmall {
-  font-size: 10px;
+  font-size: 0.625rem;
 }
 
 @keyframes fade-in {
@@ -143,39 +161,6 @@ textarea {
   transform: scaleX(1);
 }
 
-.product-swiper .swiper-button-next,
-.product-swiper .swiper-button-prev {
-  width: 32px;
-  height: 32px;
-  color: #171717;
-  /* background: rgba(255, 255, 255, 0.85); */
-  /* border-radius: 9999px; */
-  /* box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12); */
-}
-
-.product-swiper .swiper-button-next::after,
-.product-swiper .swiper-button-prev::after {
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.product-swiper .swiper-button-prev {
-  left: 12px;
-}
-
-.product-swiper .swiper-button-next {
-  right: 12px;
-}
-
-.product-swiper .swiper-pagination-bullet {
-  background: #171717;
-  opacity: 0.4;
-}
-
-.product-swiper .swiper-pagination-bullet-active {
-  opacity: 1;
-}
-
 @keyframes shimmer {
   100% {
     transform: translateX(100%);
@@ -188,6 +173,45 @@ textarea {
 
 @media (prefers-reduced-motion: reduce) {
   .animate-shimmer {
+    animation: none;
+  }
+}
+/* The 3D showroom's look panel: slides in from the right on desktop and up
+   from the bottom on a phone. */
+@keyframes look-panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(2.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes look-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(2.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.look-panel {
+  animation: look-panel-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (max-width: 639px) {
+  .look-panel {
+    animation-name: look-sheet-in;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .look-panel {
     animation: none;
   }
 }

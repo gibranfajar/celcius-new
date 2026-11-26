@@ -54,7 +54,7 @@ export default function AboutPage() {
         </div>
 
         <div className="flex justify-center">
-          <div className="w-full max-w-[350px]">
+          <div className="w-full max-w-[21.875rem]">
             <Image
               src={about.image_url}
               loading="lazy"
