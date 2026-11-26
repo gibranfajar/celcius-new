@@ -103,16 +103,6 @@ export function createShowroom(
 
   // ---- shared state ----------------------------------------------------------
   const carousel = { rot: 0 };
-  /**
-   * Where page scrolling wants the carousel (see follow). The render loop
-   * eases towards it every frame, so the turn stays smooth however jerkily
-   * the page scrolls (a mouse wheel moves in notches). Null while something
-   * else - a drag, a click, the arrow keys - turns the carousel.
-   */
-  let followTarget: number | null = null;
-  let lastFrameTime = 0;
-  /** How quickly the carousel catches up with the scroll (per second). */
-  const FOLLOW_RATE = 6;
   const cam = { v: initial === "grid" ? 1 : 0 };
   const shift = { v: 0 }; // world units the camera slides sideways
   let interactive = true;
@@ -150,13 +140,6 @@ export function createShowroom(
   const camLook = new THREE.Vector3();
 
   function frame(time: number) {
-    const dt = Math.min(Math.max(time - lastFrameTime, 0), 0.1);
-    lastFrameTime = time;
-    if (followTarget !== null && !dragging) {
-      const gap = followTarget - carousel.rot;
-      carousel.rot =
-        Math.abs(gap) < 0.0005 ? followTarget : carousel.rot + gap * (1 - Math.exp(-dt * FOLLOW_RATE));
-    }
 
     for (let i = 0; i < slots.length; i++) {
       const slot = slots[i];
@@ -194,7 +177,6 @@ export function createShowroom(
 
   function setLayout(mode: LayoutMode, animate = true) {
     target = mode;
-    followTarget = null;
     const toGrid = mode === "grid";
     gsap.killTweensOf(blends);
     gsap.killTweensOf(cam);
@@ -238,7 +220,6 @@ export function createShowroom(
   const worldPerPx = () => (planeH() * aspect) / width;
 
   function snap(extra = 0) {
-    followTarget = null;
     const goal = Math.round((carousel.rot + extra) / STEP) * STEP;
     gsap.to(carousel, {
       rot: goal,
@@ -269,7 +250,6 @@ export function createShowroom(
 
   /** Rotate the carousel so look `i` is in front, by the shortest way. */
   function bringToFront(i: number) {
-    followTarget = null;
     const full = Math.PI * 2;
     const want = -i * STEP;
     const goal = want + Math.round((carousel.rot - want) / full) * full;
@@ -289,7 +269,6 @@ export function createShowroom(
     travelled = 0;
     if (target !== "showcase") return;
     dragging = true;
-    followTarget = null;
     lastX = e.clientX;
     lastT = downT;
     velocity = 0;
@@ -343,7 +322,6 @@ export function createShowroom(
     if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
     e.preventDefault();
     gsap.killTweensOf(carousel);
-    followTarget = null;
     const delta = e.deltaX;
     const unit = e.deltaMode === 1 ? 16 : 1; // lines -> px
     carousel.rot -= (delta * unit * 0.0016) * (STEP / 0.7);
@@ -362,15 +340,14 @@ export function createShowroom(
     if (target !== "showcase" || dragging) return;
     const full = Math.PI * 2;
     const want = -position * STEP;
-    // the same angle, the nearest turn to where the carousel is now
-    const from = followTarget ?? carousel.rot;
+    // the same angle, the nearest turn to where the carousel is now; set
+    // straight away, so the carousel moves exactly with the page
     gsap.killTweensOf(carousel);
-    followTarget = want + Math.round((from - want) / full) * full;
+    carousel.rot = want + Math.round((carousel.rot - want) / full) * full;
   }
 
   function step(direction: 1 | -1) {
     if (!interactive || target !== "showcase") return;
-    followTarget = null;
     const goal = Math.round(carousel.rot / STEP) * STEP + direction * STEP;
     gsap.to(carousel, {
       rot: goal,
