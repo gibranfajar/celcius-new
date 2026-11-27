@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
+import "lenis/dist/lenis.css";
 import "./globals.css";
 import Navbar from "@/components/navigations/Navbar/Navbar";
 import Footer from "@/components/navigations/Footer";
 import GuestSignupCard from "@/components/GuestSignupCard";
 import GuestSignupPopup from "@/components/GuestSignupPopup";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import SmoothScroll from "@/components/SmoothScroll";
+import ScrollRestoration from "@/components/ScrollRestoration";
+import NavigationProgress from "@/components/NavigationProgress";
+import IntroLoader from "@/components/IntroLoader";
+import { introSeenScript } from "@/lib/intro";
+import { Suspense } from "react";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { Toaster } from "react-hot-toast";
 import { Providers } from "@/redux/providers";
@@ -21,8 +28,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    // The intro script marks <html> before React hydrates.
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: introSeenScript }} />
+      </head>
       <body className="antialiased min-h-screen seccond-font">
+        <IntroLoader />
+        <SmoothScroll />
+        {/* Both read the URL's query, which needs a Suspense boundary. */}
+        <Suspense fallback={null}>
+          <ScrollRestoration />
+          <NavigationProgress />
+        </Suspense>
         <Providers>
           <Navbar />
           <GuestSignupPopup />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { getLenis } from "@/lib/lenis";
 
 /** How many open overlays want the page locked; it unlocks at zero. */
 let lockCount = 0;
@@ -30,6 +31,9 @@ function lock() {
   if (scrollbarWidth > 0) {
     body.style.paddingRight = `${scrollbarWidth}px`;
   }
+  // Lenis scrolls the page from script, which overflow: hidden doesn't
+  // stop, so pause it too. Scrollable panels inside the overlay still work.
+  getLenis()?.stop();
 }
 
 function unlock() {
@@ -40,6 +44,12 @@ function unlock() {
   html.style.overflow = savedStyles.htmlOverflow;
   body.style.paddingRight = savedStyles.bodyPaddingRight;
   savedStyles = null;
+  getLenis()?.start();
+}
+
+/** Whether an overlay is holding the page still right now. */
+export function isBodyScrollLocked() {
+  return lockCount > 0;
 }
 
 /**

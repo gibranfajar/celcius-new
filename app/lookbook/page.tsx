@@ -7,7 +7,9 @@ import { useInfiniteList } from "@/lib/hooks/useInfiniteList";
 
 export default function LookbookPage() {
   const { items, loading, loadingMore, error, loadMoreError, sentinelRef } =
-    useInfiniteList((page) => getLookbooks(page), []);
+    useInfiniteList((page) => getLookbooks(page), [], {
+      cacheKey: "lookbooks",
+    });
 
   return (
     <div className="p-4 md:px-6 min-h-screen pt-4 seccond-font">

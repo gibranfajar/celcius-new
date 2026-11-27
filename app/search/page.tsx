@@ -21,7 +21,7 @@ function SearchResults() {
   } = useInfiniteList<Product>(
     (page) => getProducts({ page, search: query }),
     [query],
-    { enabled: !!query },
+    { enabled: !!query, cacheKey: `search:${query}` },
   );
 
   return (

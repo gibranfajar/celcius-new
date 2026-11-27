@@ -1,37 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, ImageOff } from "lucide-react";
 import Image from "next/image";
 import { getLookbook } from "@/lib/api";
-import { getErrorMessage } from "@/lib/api/client";
+import { useCachedData } from "@/lib/pageCache";
 import { Lookbook } from "@/lib/api/types";
 import SkeletonImage, { Skeleton } from "@/components/SkeletonImage";
 
 export default function LookbookDetail() {
   const { slug } = useParams<{ slug: string }>();
-  const [lookbook, setLookbook] = useState<Lookbook | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!slug) return;
-
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        setLookbook(await getLookbook(slug));
-      } catch (err) {
-        setError(getErrorMessage(err));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [slug]);
+  // Cached, so Back to this page shows it at once (and where it was left).
+  const { data, loading, error } = useCachedData(
+    slug ? `lookbook:${slug}` : null,
+    () => getLookbook(slug),
+  );
+  const lookbook: Lookbook | null = data ?? null;
 
   if (loading) {
     return (

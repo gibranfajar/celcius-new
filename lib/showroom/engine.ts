@@ -31,6 +31,11 @@ export interface Showroom {
    * front, 1 the second, 1.5 halfway between them (showcase mode only).
    */
   follow(position: number): void;
+  /**
+   * Like follow, but turns there smoothly. While it turns, follow calls for
+   * the same position (the page catching up) don't cut it short.
+   */
+  glideTo(position: number): void;
   dispose(): void;
 }
 
@@ -70,7 +75,9 @@ export function createShowroom(
     alpha: true,
     powerPreference: "high-performance",
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  // A full-screen canvas redrawn every frame: past 1.5x the extra pixels
+  // cost the GPU far more than they add to soft photo cut-outs.
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
@@ -135,11 +142,20 @@ export function createShowroom(
   ro.observe(container);
   resize();
 
+  // Drawing a frame nobody sees still costs a full-screen render, which
+  // starves the rest of the page while it scrolls: skip it off screen.
+  let onScreen = true;
+  const io = new IntersectionObserver(([entry]) => {
+    onScreen = entry.isIntersecting;
+  });
+  io.observe(container);
+
   // ---- per-frame: write transforms straight onto the 3D objects --------------
   const camPos = new THREE.Vector3();
   const camLook = new THREE.Vector3();
 
   function frame(time: number) {
+    if (!onScreen) return;
 
     for (let i = 0; i < slots.length; i++) {
       const slot = slots[i];
@@ -336,14 +352,34 @@ export function createShowroom(
   el.style.touchAction = "pan-y";
   el.style.cursor = baseCursor();
 
-  function follow(position: number) {
-    if (target !== "showcase" || dragging) return;
+  /** The angle for `position`, on the nearest turn to where the carousel is. */
+  function angleFor(position: number) {
     const full = Math.PI * 2;
     const want = -position * STEP;
-    // the same angle, the nearest turn to where the carousel is now; set
-    // straight away, so the carousel moves exactly with the page
+    return want + Math.round((carousel.rot - want) / full) * full;
+  }
+
+  let glide: gsap.core.Tween | null = null;
+  let glideTarget = NaN;
+
+  function follow(position: number) {
+    if (target !== "showcase" || dragging) return;
+    if (glide?.isActive() && Math.abs(position - glideTarget) < 0.01) return;
+    glide = null;
+    // set straight away, so the carousel moves exactly with the page
     gsap.killTweensOf(carousel);
-    carousel.rot = want + Math.round((carousel.rot - want) / full) * full;
+    carousel.rot = angleFor(position);
+  }
+
+  function glideTo(position: number) {
+    if (target !== "showcase") return;
+    glideTarget = position;
+    glide = gsap.to(carousel, {
+      rot: angleFor(position),
+      duration: 0.9,
+      ease: "power3.out",
+      overwrite: true,
+    });
   }
 
   function step(direction: 1 | -1) {
@@ -366,6 +402,7 @@ export function createShowroom(
     setLayout: setLayoutWithCursor,
     step,
     follow,
+    glideTo,
     setInteractive(on: boolean) {
       interactive = on;
       if (!on) {
@@ -385,6 +422,7 @@ export function createShowroom(
       gsap.killTweensOf(cam);
       gsap.killTweensOf(carousel);
       ro.disconnect();
+      io.disconnect();
       el.removeEventListener("pointerdown", onDown);
       el.removeEventListener("pointermove", onMove);
       el.removeEventListener("pointerup", onUp);

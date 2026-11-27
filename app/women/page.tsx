@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useCachedData } from "@/lib/pageCache";
 import { getProducts, getBanners } from "@/lib/api";
 import { Banner, Product } from "@/lib/api/types";
 import Image from "next/image";
@@ -10,31 +11,26 @@ import BannerCarousel from "@/components/BannerCarousel";
 import formatProductName from "@/lib/formatProductName";
 import { formatToIdr } from "@/lib/formatToIdr";
 
+async function loadWomenHome() {
+  const [productsRes, bannersRes] = await Promise.all([
+    getProducts({ type: "women" }),
+    getBanners({ page: "women" }),
+  ]);
+  return { products: productsRes.data, banners: bannersRes };
+}
+
 export default function WomenHome() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [banners, setBanners] = useState<Banner[]>([]);
-
+  // Cached, so Back to this page shows it at once (and where it was left).
+  const { data, loading: isLoading, error } = useCachedData(
+    "women-home",
+    loadWomenHome,
+  );
   useEffect(() => {
-    const load = async () => {
-      setIsLoading(true);
-      try {
-        const [productsRes, bannersRes] = await Promise.all([
-          getProducts({ type: "women" }),
-          getBanners({ page: "women" }),
-        ]);
+    if (error) console.error("Error fetching data:", error);
+  }, [error]);
 
-        setProducts(productsRes.data);
-        setBanners(bannersRes);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    load();
-  }, []);
+  const products: Product[] = data?.products ?? [];
+  const banners: Banner[] = data?.banners ?? [];
 
   const womenProducts = products.slice(0, 8);
 

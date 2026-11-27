@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useCachedData } from "@/lib/pageCache";
 import formatProductName from "@/lib/formatProductName";
 import { formatToIdr } from "@/lib/formatToIdr";
 import { formatMiniText } from "@/lib/formatMiniText";
@@ -12,53 +13,47 @@ import SkeletonImage, { Skeleton } from "@/components/SkeletonImage";
 import BannerCarousel from "@/components/BannerCarousel";
 import Showroom from "@/components/showroom/Showroom";
 
+async function loadHome() {
+  const [menRes, bannersRes, lookbooksRes, looks] = await Promise.all([
+    getProducts({ type: "men" }),
+    getBanners({ page: "men" }),
+    getLookbooks(),
+    // The showroom is a bonus: the page still loads without it.
+    getLooks().catch((error) => {
+      console.error("Error fetching looks:", error);
+      return [] as Look[];
+    }),
+  ]);
+
+  // Home grid: the 2 most recently published "men" lookbooks plus the
+  // most recently published "women" one - 3 tiles total. `lookbooksRes`
+  // is already ordered latest-first by the API.
+  const latestMen = lookbooksRes.data
+    .filter((l) => l.type === "men")
+    .slice(0, 2);
+  const latestWomen = lookbooksRes.data
+    .filter((l) => l.type === "women")
+    .slice(0, 1);
+
+  return {
+    products: menRes.data.slice(0, 8),
+    banners: bannersRes,
+    looks,
+    gridLookbooks: [...latestMen, ...latestWomen],
+  };
+}
+
 export default function Home() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [banners, setBanners] = useState<Banner[]>([]);
-  const [looks, setLooks] = useState<Look[]>([]);
-  const [gridLookbooks, setGridLookbooks] = useState<Lookbook[]>([]);
-
+  // Cached, so Back to the home page shows it at once (and where it was left).
+  const { data, loading: isLoading, error } = useCachedData("home", loadHome);
   useEffect(() => {
-    const load = async () => {
-      setIsLoading(true);
-      try {
-        const [menRes, bannersRes, lookbooksRes, looksRes] = await Promise.all([
-          getProducts({ type: "men" }),
-          getBanners({ page: "men" }),
-          getLookbooks(),
-          // The showroom is a bonus: the page still loads without it.
-          getLooks().catch((error) => {
-            console.error("Error fetching looks:", error);
-            return [] as Look[];
-          }),
-        ]);
+    if (error) console.error("Error fetching home data:", error);
+  }, [error]);
 
-        // Home grid: 4 of each so both genders are represented, not just
-        // whichever happened to be newest overall.
-        setProducts([...menRes.data.slice(0, 8)]);
-        setBanners(bannersRes);
-        setLooks(looksRes);
-
-        // Home grid: the 2 most recently published "men" lookbooks plus the
-        // most recently published "women" one - 3 tiles total. `lookbooksRes`
-        // is already ordered latest-first by the API.
-        const latestMen = lookbooksRes.data
-          .filter((l) => l.type === "men")
-          .slice(0, 2);
-        const latestWomen = lookbooksRes.data
-          .filter((l) => l.type === "women")
-          .slice(0, 1);
-        setGridLookbooks([...latestMen, ...latestWomen]);
-      } catch (error) {
-        console.error("Error fetching home data:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    load();
-  }, []);
+  const products: Product[] = data?.products ?? [];
+  const banners: Banner[] = data?.banners ?? [];
+  const looks: Look[] = data?.looks ?? [];
+  const gridLookbooks: Lookbook[] = data?.gridLookbooks ?? [];
 
   if (isLoading) {
     return (

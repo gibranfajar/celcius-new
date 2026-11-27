@@ -125,6 +125,7 @@ export interface LookItem {
     | "discount_value"
     | "final_price"
     | "categories"
+    | "sizechart"
   >;
   variant: ProductVariant;
 }

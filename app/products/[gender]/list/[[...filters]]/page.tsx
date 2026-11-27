@@ -44,6 +44,7 @@ export default function ProductListPage() {
         onSale,
       }),
     [gender, categorySlug, onSale],
+    { cacheKey: `products:${gender}:${categorySlug ?? ""}:${onSale}` },
   );
 
   const title = useMemo(() => {

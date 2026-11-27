@@ -1,38 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, ImageOff } from "lucide-react";
 import Image from "next/image";
 import { getCollection } from "@/lib/api";
-import { getErrorMessage } from "@/lib/api/client";
+import { useCachedData } from "@/lib/pageCache";
 import { Collection } from "@/lib/api/types";
 import SkeletonImage, { Skeleton } from "@/components/SkeletonImage";
 
 export default function CollectionDetail() {
   const { slug } = useParams<{ slug: string }>();
-  const [collection, setCollection] = useState<Collection | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!slug) return;
-
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const data = await getCollection(slug);
-        setCollection(data);
-      } catch (err) {
-        setError(getErrorMessage(err));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [slug]);
+  // Cached, so Back to this page shows it at once (and where it was left).
+  const { data, loading, error } = useCachedData(
+    slug ? `collection:${slug}` : null,
+    () => getCollection(slug),
+  );
+  const collection: Collection | null = data ?? null;
 
   if (loading) {
     return (

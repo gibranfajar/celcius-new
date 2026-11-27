@@ -142,7 +142,7 @@ function OrderDetailModal({
           <button
             onClick={onClose}
             aria-label="Close"
-            className="text-zinc-400 hover:text-black transition-colors cursor-pointer"
+            className="max-sm:hidden text-zinc-400 hover:text-black transition-colors cursor-pointer"
           >
             <X size="1.125rem" />
           </button>

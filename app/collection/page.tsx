@@ -7,7 +7,9 @@ import { useInfiniteList } from "@/lib/hooks/useInfiniteList";
 
 export default function Collection() {
   const { items, loading, loadingMore, error, loadMoreError, sentinelRef } =
-    useInfiniteList((page) => getCollections(page), []);
+    useInfiniteList((page) => getCollections(page), [], {
+      cacheKey: "collections",
+    });
 
   return (
     <div className="p-4 md:px-6 min-h-screen pt-4 seccond-font">

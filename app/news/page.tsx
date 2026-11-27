@@ -59,7 +59,7 @@ function NewsArticle({ item }: { item: News }) {
 
 export default function NewsPage() {
   const { items: news, loading, loadingMore, loadMoreError, sentinelRef } =
-    useInfiniteList<News>((page) => getNews(page), []);
+    useInfiniteList<News>((page) => getNews(page), [], { cacheKey: "news" });
 
   return (
     <div className="min-h-screen px-4 md:px-6 py-8 seccond-font">

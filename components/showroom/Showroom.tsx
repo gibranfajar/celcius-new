@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { LayoutMode, Showroom as ShowroomEngine } from "@/lib/showroom/engine";
 import type { Look } from "@/lib/api/types";
 import formatProductName from "@/lib/formatProductName";
+import { AnimatePresence } from "framer-motion";
 import LookPanel, { lookTitle } from "./LookPanel";
+import { getLenis } from "@/lib/lenis";
 
 /** Screens where page scrolling turns the carousel; smaller ones drag it. */
 const SCROLL_DRIVEN_QUERY = "(min-width: 1024px)";
@@ -48,6 +50,10 @@ export default function Showroom({
   const [layout, setLayout] = useState<LayoutMode>("showcase");
   const layoutRef = useRef<LayoutMode>(layout);
   const [selected, setSelected] = useState<number | null>(null);
+  const selectedRef = useRef(selected);
+  selectedRef.current = selected;
+  /** The look whose panel is (or was last) open. */
+  const openedRef = useRef<number | null>(null);
   const [frontIndex, setFrontIndex] = useState(0);
   const positionRef = useRef(0);
 
@@ -84,44 +90,143 @@ export default function Showroom({
     // Keyed on the image list's contents, not the array's identity.
   }, [imagesKey]);
 
-  /** How far the page has scrolled through the pinned showroom, in looks. */
-  const readScroll = useCallback(() => {
+  /**
+   * Where the showroom's scroll track sits on the page: `start` is the
+   * scroll offset at which it pins, `travel` how far the page then scrolls
+   * while it stays pinned (spread evenly over the looks).
+   */
+  const measureTrack = useCallback(() => {
     const wrapper = wrapperRef.current;
     const pinned = pinnedRef.current;
-    if (!wrapper || !pinned || count < 2) return 0;
+    if (!wrapper || !pinned || count < 2) return null;
     const travel = wrapper.offsetHeight - pinned.offsetHeight;
-    if (travel <= 0) return 0;
-    // While pinned, the stage stays put and the wrapper slides up past it.
-    const scrolled =
-      pinned.getBoundingClientRect().top - wrapper.getBoundingClientRect().top;
-    return Math.min(Math.max(scrolled / travel, 0), 1) * (count - 1);
+    if (travel <= 0) return null;
+    const stickyTop = parseFloat(getComputedStyle(pinned).top) || 0;
+    const start =
+      wrapper.getBoundingClientRect().top + window.scrollY - stickyTop;
+    return { start, travel };
   }, [count]);
 
-  // Page scroll -> carousel.
+  // Page scroll -> carousel, and settling on the nearest look.
   useEffect(() => {
     if (!scrollDriven) return;
-    let frame = 0;
+    let track = measureTrack();
+    const lenis = getLenis();
+    const currentScroll = () => (lenis ? lenis.scroll : window.scrollY);
 
-    const update = () => {
-      frame = 0;
-      const position = readScroll();
+    const positionAt = (scroll: number) =>
+      track
+        ? Math.min(Math.max((scroll - track.start) / track.travel, 0), 1) *
+          (count - 1)
+        : 0;
+
+    const apply = (scroll: number) => {
+      // While a look is open (and until its closing has moved the page to
+      // that look), the carousel holds the opened look in front. Opening
+      // and closing pause and resume the page scroll, which reports the
+      // old spot: following it would swing the carousel back.
+      if (selectedRef.current !== null || openedRef.current !== null) return;
+      const position = positionAt(scroll);
       positionRef.current = position;
       setFrontIndex(Math.round(position));
       roomRef.current?.follow(position);
     };
-    const onScroll = () => {
-      if (!frame) frame = requestAnimationFrame(update);
+
+    // When the visitor stops between two looks, carry on to one of them so
+    // a look always ends up squarely in front. It goes the way they were
+    // scrolling once they have moved a little (one wheel notch is enough),
+    // so scrolling slowly still steps through the looks rather than being
+    // pulled back each time. Only inside the pinned stretch: above or below
+    // the showroom the page is left alone.
+    const NUDGE = 0.15; // of the distance between two looks
+    let restIndex = Math.round(positionAt(currentScroll()));
+    let snapTimer = 0;
+    const cancelSnap = () => window.clearTimeout(snapTimer);
+    const scheduleSnap = (delay: number) => {
+      cancelSnap();
+      snapTimer = window.setTimeout(snap, delay);
+    };
+    const snap = () => {
+      if (!track || selectedRef.current !== null || lenis?.isStopped) return;
+      // Mid-glide, aim from where the glide is heading, so the snap
+      // continues the motion instead of reversing it.
+      const heading =
+        lenis && lenis.isScrolling === "smooth"
+          ? lenis.targetScroll
+          : currentScroll();
+      const scrolled = heading - track.start;
+      if (scrolled <= 0 || scrolled >= track.travel) {
+        restIndex = scrolled <= 0 ? 0 : count - 1;
+        return;
+      }
+      const position = (scrolled / track.travel) * (count - 1);
+      const nearest = Math.round(position);
+      if (Math.abs(position - nearest) < 0.005) {
+        restIndex = nearest;
+        return;
+      }
+      const goal =
+        position > restIndex
+          ? Math.ceil(position - NUDGE)
+          : Math.floor(position + NUDGE);
+      const index = Math.min(Math.max(goal, 0), count - 1);
+      restIndex = index;
+      const y = track.start + (index / (count - 1)) * track.travel;
+      if (lenis) {
+        lenis.scrollTo(y, {
+          duration: 0.7,
+          easing: (t) => 1 - Math.pow(1 - t, 3),
+        });
+      } else {
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
     };
 
-    update();
+    const remeasure = () => {
+      track = measureTrack();
+      apply(currentScroll());
+    };
+    remeasure();
+    // Content above loading in, or the window resizing, moves the track.
+    const observer = new ResizeObserver(remeasure);
+    if (wrapperRef.current) observer.observe(wrapperRef.current);
+    observer.observe(document.body);
+
+    if (lenis) {
+      // Runs inside Lenis's step, before the scene draws in the same frame.
+      const offScroll = lenis.on("scroll", (l) => {
+        apply(l.scroll);
+        // Scrolling came to rest (also after keyboard or scrollbar use).
+        if (!l.isScrolling) scheduleSnap(60);
+      });
+      // The wheel went quiet: snap while the glide is still easing out.
+      const offInput = lenis.on("virtual-scroll", () => scheduleSnap(160));
+      return () => {
+        offScroll();
+        offInput();
+        cancelSnap();
+        observer.disconnect();
+      };
+    }
+
+    let frame = 0;
+    const onScroll = () => {
+      if (!frame) {
+        frame = requestAnimationFrame(() => {
+          frame = 0;
+          apply(window.scrollY);
+        });
+      }
+      scheduleSnap(150);
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
     return () => {
       cancelAnimationFrame(frame);
+      cancelSnap();
+      observer.disconnect();
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
     };
-  }, [scrollDriven, readScroll]);
+  }, [scrollDriven, measureTrack, count]);
 
   // Layout state drives the animated transformation inside the scene.
   useEffect(() => {
@@ -129,15 +234,49 @@ export default function Showroom({
     roomRef.current?.setLayout(layout);
   }, [layout]);
 
-  // While a look is open the scene steps aside and stops reacting; once it
-  // closes, the carousel goes back to where the page is scrolled.
+  /**
+   * Move the page to where scrolling would put look `index` in front. The
+   * showroom is pinned, so nothing on screen moves but the carousel.
+   */
+  const scrollToLook = useCallback(
+    (index: number) => {
+      const track = measureTrack();
+      if (!track) return;
+      const y = track.start + (index / (count - 1)) * track.travel;
+      const lenis = getLenis();
+      if (lenis) lenis.scrollTo(y, { immediate: true, force: true });
+      else window.scrollTo(0, y);
+    },
+    [count, measureTrack],
+  );
+
+  // While a look is open the scene steps aside and stops reacting. Once it
+  // closes, the look that was opened stays in front: the page moves to that
+  // look's spot rather than the carousel turning back to where the page was.
   useEffect(() => {
     roomRef.current?.setInteractive(selected === null);
     roomRef.current?.setPanelOpen(selected !== null);
-    if (selected === null && scrollDrivenRef.current) {
-      roomRef.current?.follow(positionRef.current);
+    if (selected !== null) {
+      openedRef.current = selected;
+      // Bring the chosen look to the front, smoothly, however it was picked.
+      roomRef.current?.glideTo(selected);
+      setFrontIndex(selected);
+      return;
     }
-  }, [selected]);
+
+    const opened = openedRef.current;
+    openedRef.current = null;
+    if (!scrollDrivenRef.current) return;
+    if (opened === null) {
+      roomRef.current?.follow(positionRef.current);
+      return;
+    }
+    positionRef.current = opened;
+    setFrontIndex(opened);
+    // Smooth even if the turn toward it (started on click) hasn't finished.
+    roomRef.current?.glideTo(opened);
+    scrollToLook(opened);
+  }, [selected, scrollToLook]);
 
   if (count === 0) return null;
 
@@ -286,9 +425,11 @@ export default function Showroom({
         </div>
       </section>
 
-      {selectedLook && (
-        <LookPanel key={selectedLook.id} look={selectedLook} onClose={close} />
-      )}
+      <AnimatePresence>
+        {selectedLook && (
+          <LookPanel key={selectedLook.id} look={selectedLook} onClose={close} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

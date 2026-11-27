@@ -109,7 +109,7 @@ export default function ModalShippingAddress({
           <button
             onClick={() => setShowModal(false)}
             aria-label="Close"
-            className="cursor-pointer text-zinc-500 hover:text-black transition-colors"
+            className="max-sm:hidden cursor-pointer text-zinc-500 hover:text-black transition-colors"
           >
             <X size="1.25rem" />
           </button>

@@ -181,7 +181,7 @@ export default function StorePickerModal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="cursor-pointer text-zinc-500 hover:text-black"
+            className="max-sm:hidden cursor-pointer text-zinc-500 hover:text-black"
           >
             <X size="1.25rem" />
           </button>
